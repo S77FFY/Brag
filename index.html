@@ -4,14 +4,14 @@
   Copyright (c) 2026 Ben Stiff @ Room46.uk. All rights reserved.
   No copying, redistribution or rehosting without permission.
   Card graphics carried over from the Noms project.
-  HO·Ben Stiff @ Room46.uk·0.2.0·2026-11-22·bg7d2f
+  HO·Ben Stiff @ Room46.uk·0.2.1·2026-11-22·bg7d2f
 -->
-<html lang="en" data-build="HO·Ben Stiff @ Room46.uk·0.2.0·2026-11-22·bg7d2f">
+<html lang="en" data-build="HO·Ben Stiff @ Room46.uk·0.2.1·2026-11-22·bg7d2f">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="app-repo" content="Brag">
-<meta name="app-version" content="0.2.0">
+<meta name="app-version" content="0.2.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#05070f">
@@ -124,6 +124,10 @@ button[disabled]{opacity:.32}
   padding:4px 6px;border-radius:2px;color:var(--bone-dim)}
 .badge.sent{color:var(--purple);border-color:var(--purple-dk)}
 .badge.on{color:var(--gold);border-color:var(--gold-dk)}
+.seatact{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.seatnote{font:400 12px/1.3 Georgia,serif;color:var(--turn);opacity:.85}
+.card.pickable{cursor:pointer;box-shadow:0 0 0 2px var(--turn),0 4px 12px rgba(0,0,0,.5)}
+.card.justtook{box-shadow:0 0 0 2px var(--gold),0 4px 12px rgba(0,0,0,.5)}
 .hand-name{font:400 13px/1.5 Georgia,serif;color:var(--bone);margin-top:8px;min-height:1.5em}
 .seat.won .hand-name{color:var(--gold-hi)}
 .tip{color:var(--bone-dim);font-size:13px;max-width:54ch;padding-top:14px}
@@ -199,6 +203,7 @@ body.handview .stamp,body.hostview .stamp{display:none}
   <h1>Brag</h1>
   <div class="suits">&#9824;<span class="r">&#9829;</span><span class="r">&#9830;</span>&#9827;</div>
   <p id="gateMsg">Pick this device's job. One deals, the rest are hands.</p>
+  <div class="net" id="joinStep" style="min-height:1.2em"></div>
   <div class="roles">
     <button class="primary" id="beHost">Deal from this device</button>
     <button id="bePlayer">Join as a hand</button>
@@ -231,7 +236,7 @@ body.handview .stamp,body.hostview .stamp{display:none}
 
 <section id="hand" class="screen">
   <div class="topbar">
-    <div class="hcredit" id="hCredit">&copy; 2026 Ben Stiff @ Room46.uk &middot; v0.2.0</div>
+    <div class="hcredit" id="hCredit">&copy; 2026 Ben Stiff @ Room46.uk &middot; v0.2.1</div>
     <div class="whose" id="whose">waiting for the deal</div>
     <div class="tablerow" id="tablerow"></div>
   </div>
@@ -245,14 +250,14 @@ body.handview .stamp,body.hostview .stamp{display:none}
   <p id="relayP">You can close this tab and go back to the game.</p>
 </section>
 
-<div class="stamp" id="stamp">v0.2.0</div>
+<div class="stamp" id="stamp">v0.2.1</div>
 <div class="gatecredit" id="gateCredit">&copy; 2026 Ben Stiff @ Room46.uk</div>
 <div id="dbg"></div>
 
 <script>
 "use strict";
-const VERSION="0.2.0";
-const BUILD="HO·Ben Stiff @ Room46.uk·0.2.0·2026-11-22·bg7d2f";
+const VERSION="0.2.1";
+const BUILD="HO·Ben Stiff @ Room46.uk·0.2.1·2026-11-22·bg7d2f";
 const LOCK_HOST="";   // e.g. "s77ffy.github.io" — empty means no lock
 const HOME_URL ="";   // e.g. "https://s77ffy.github.io/Brag/"
 (function lock(){
@@ -264,6 +269,7 @@ const HOME_URL ="";   // e.g. "https://s77ffy.github.io/Brag/"
 })();
 
 const $=s=>document.querySelector(s);
+function step(t){ const e=document.querySelector("#joinStep"); if(e) e.textContent=t; }
 const el=(t,c)=>{const e=document.createElement(t); if(c)e.className=c; return e;};
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const SUIT=["♠","♥","♦","♣"];
@@ -413,14 +419,29 @@ function unpackSDP(packed,type){
   return {type, sdp:L.join("\r\n")+"\r\n"};
 }
 const ICE=[{urls:"stun:stun.l.google.com:19302"}];
-function gathered(pc){
+// Wait for candidates properly. iOS hides local addresses behind mDNS and
+// takes its time, so a flat short timeout can ship an empty answer that
+// silently never connects.
+function gathered(pc, onTick){
   return new Promise(r=>{
-    if(pc.iceGatheringState==="complete") return r();
-    const t=setTimeout(r,2500);
-    pc.addEventListener("icegatheringstatechange",()=>{
-      if(pc.iceGatheringState==="complete"){clearTimeout(t);r();}
+    let seen=0, started=Date.now(), done=false;
+    const finish=()=>{ if(done) return; done=true; clearInterval(iv); r(seen); };
+    pc.addEventListener("icecandidate",e=>{
+      if(e.candidate && e.candidate.candidate){ seen++; if(onTick) onTick(seen); }
+      if(!e.candidate) finish();                       // gathering finished
     });
+    const iv=setInterval(()=>{
+      const ms=Date.now()-started;
+      if(pc.iceGatheringState==="complete") return finish();
+      if(seen>0 && ms>2200) return finish();           // enough to connect on a LAN
+      if(ms>9000) return finish();                     // give up waiting
+    },200);
+    if(pc.iceGatheringState==="complete") finish();
   });
+}
+function countCands(packed){
+  const c=(packed.split("~")[4]||"").split(",").filter(Boolean);
+  return c.length;
 }
 
 /* ===================== storage ===================== */
@@ -448,7 +469,8 @@ function hostBoot(){
   const saved=store.host;
   if(saved){ H.seats=saved.seats||[]; H.round=saved.round||0; H.seed=saved.seed; H.knockRule=saved.knockRule||"same"; }
   if(!H.seed) H.seed=rnd12().slice(0,8);
-  if(!H.seats.length) H.seats=[{n:"Seat 1"}];
+  if(!H.seats.length) H.seats=[{n:"You",local:true}];
+  if(!H.seats[0].local) H.seats.unshift({n:"You",local:true});
   H.seats.forEach(s=>{ s.sent=false; });   // connections never survive a reload
   document.body.classList.add("hostview");
   $("#hostCredit").textContent="© 2026 Ben Stiff @ Room46.uk · v"+VERSION;
@@ -464,7 +486,8 @@ function hostBoot(){
   render();
 }
 function rnd12(){ const a=new Uint8Array(8); crypto.getRandomValues(a); return [...a].map(b=>b.toString(16).padStart(2,"0")).join(""); }
-function saveHost(){ store.host={seats:H.seats.map(s=>({n:s.n})),round:H.round,seed:H.seed,knockRule:H.knockRule}; }
+const MAXSEATS=10;
+function saveHost(){ store.host={seats:H.seats.map(s=>({n:s.n,local:!!s.local})),round:H.round,seed:H.seed,knockRule:H.knockRule}; }
 
 /* --- pairing --- */
 async function inviteSeat(i){
@@ -483,6 +506,7 @@ async function inviteSeat(i){
   await pc.setLocalDescription(await pc.createOffer());
   await gathered(pc);
   const packed=packSDP(pc.localDescription.sdp);
+  if(countCands(packed)===0){ LINKS[i].state="no network"; render(); }
   const base=location.href.split("#")[0];
   const url=`${base}#s=${i}&n=${encodeURIComponent(seat.n)}&o=${encodeURIComponent(packed)}`;
   seat.sent=true; LINKS[i].state="waiting"; render();
@@ -500,6 +524,8 @@ async function takeAnswer(i,packed){
   if(L.claimed) return;
   if(L.pc.signalingState!=="have-local-offer") return;
   L.claimed=packed;
+  try{ if(H.ch) H.ch.postMessage({t:"ack",seat:i}); }catch(e){}
+  try{ localStorage.setItem("brag.ack",JSON.stringify({seat:i,at:Date.now()})); }catch(e){}
   try{ await L.pc.setRemoteDescription(unpackSDP(packed,"answer")); L.state="joining"; render(); }
   catch(e){ L.claimed=null; L.state="bad reply"; render(); }
 }
@@ -540,6 +566,7 @@ function viewFor(seat){
                   names:H.ranked.map(r=>({i:r.i,name:r.hand.name}))} : null };
 }
 function push(i){
+  if(H.seats[i]&&H.seats[i].local) return;
   const L=LINKS[i];
   if(L&&L.dc&&L.dc.readyState==="open"){ try{ L.dc.send(JSON.stringify(viewFor(i))); }catch(e){} }
 }
@@ -562,75 +589,138 @@ function render(){
   const bw=$("#boardWrap"); bw.style.display=G?"block":"none";
   if(G){
     const b=$("#board"); b.innerHTML="";
-    G.table.forEach((c,k)=>b.appendChild(G.faceUp[k]||G.done ? faceEl(c) : backEl()));
+    const myGo = !G.done && G.turn===localSeat();
+    G.table.forEach((c,k)=>{
+      const e = (G.faceUp[k]||G.done) ? faceEl(c) : backEl();
+      if(myGo && H.taken==null){ e.classList.add("pickable"); e.onclick=()=>{ H.taken=k; render(); }; }
+      if(H.taken===k) e.style.opacity=".25";
+      b.appendChild(e);
+    });
   }
   const c=$("#seats"); c.innerHTML="";
   H.seats.forEach((s,i)=>{
     const L=LINKS[i], open=L&&L.state==="open";
-    const d=el("div","seat"+(open?" live":""));
+    const d=el("div","seat"+(open||s.local?" live":""));
     if(G&&!G.done&&G.turn===i) d.classList.add("now");
     if(G&&G.done&&G.winners&&G.winners.indexOf(i)>=0) d.classList.add("won");
     const h=el("h3"); h.appendChild(document.createTextNode(s.n));
-    const bg=el("span","badge"+(open?" on":(s.sent?" sent":"")));
-    bg.textContent = open?"connected":(L?(L.state||"waiting"):"no phone");
+    const bg=el("span","badge"+(s.local?" on":(open?" on":(s.sent?" sent":""))));
+    bg.textContent = s.local ? "this device"
+                   : open ? "connected"
+                   : (L ? (L.state||"waiting") : "not invited yet");
     h.appendChild(bg);
-    if(H.seats.length>1){
+    if(H.seats.length>1 && !s.local){
       const x=el("button","drop"); x.textContent="×";
-      x.onclick=()=>{ H.seats.splice(i,1); H.seats.forEach((q,j)=>{ if(/^Seat \d+$/.test(q.n)) q.n="Seat "+(j+1); });
-                      H.G=null; saveHost(); render(); };
+      x.onclick=()=>{
+        if(LINKS[i]&&LINKS[i].pc){ try{LINKS[i].pc.close();}catch(e){} }
+        const keys=Object.keys(LINKS).map(Number).sort((a,b)=>a-b);
+        const re={}; keys.forEach(k=>{ if(k<i) re[k]=LINKS[k]; else if(k>i) re[k-1]=LINKS[k]; });
+        keys.forEach(k=>delete LINKS[k]); Object.assign(LINKS,re);
+        H.seats.splice(i,1);
+        H.seats.forEach((q,j)=>{ if(/^Player \d+$/.test(q.n)) q.n="Player "+j; });
+        H.G=null; H.taken=null; saveHost(); render();
+      };
       h.appendChild(x);
     }
     d.appendChild(h);
     const m=el("div","mini");
-    for(let j=0;j<3;j++){
-      if(!G) { const e=el("div","card back"); e.style.opacity=".25"; m.appendChild(e); }
-      else if(G.done) m.appendChild(faceEl(G.hands[i][j]));
-      else m.appendChild(backEl());
+    const mine=!!s.local;
+    if(!G){ for(let j=0;j<3;j++){ const e=el("div","card back"); e.style.opacity=".25"; m.appendChild(e); } }
+    else if(mine){
+      const cards = H.taken==null ? G.hands[i].slice() : G.hands[i].concat([G.table[H.taken]]);
+      const myGo = !G.done && G.turn===i;
+      cards.forEach((c,j)=>{
+        const e=faceEl(c);
+        if(H.taken!=null && j===cards.length-1) e.classList.add("justtook");
+        if(myGo && H.taken!=null){ e.classList.add("pickable"); e.onclick=()=>playLocal(j); }
+        m.appendChild(e);
+      });
     }
+    else if(G.done) for(let j=0;j<3;j++) m.appendChild(faceEl(G.hands[i][j]));
+    else for(let j=0;j<3;j++) m.appendChild(backEl());
     d.appendChild(m);
+    if(mine && G && !G.done && G.turn===i){
+      const act=el("div","seatact");
+      const can=legal(G,i);
+      if(can.knock){
+        const k=el("button","knock"+(H.knockWith?" armed":""));
+        if(G.knockRule==="next" && H.taken==null){
+          k.textContent="Knock \u2014 I'm happy"; k.onclick=()=>playLocal(null,true);
+        } else if(G.knockRule==="same"){
+          k.textContent = H.knockWith ? "Knocking \u2713" : "Knock with this swap";
+          k.onclick=()=>{ H.knockWith=!H.knockWith; render(); };
+        }
+        if(k.textContent) act.appendChild(k);
+      }
+      const note=el("span","seatnote");
+      note.textContent = H.taken==null ? "take one from the table" : "tap one of yours to put back";
+      act.appendChild(note);
+      d.appendChild(act);
+    }
     const hn=el("div","hand-name");
     if(G&&G.done) hn.textContent=rankHand(G.hands[i]).name;
+    else if(G&&s.local) hn.textContent="your hand \u2014 keep this device to yourself";
     else if(G&&G.knockedBy===i) hn.textContent="knocked";
     d.appendChild(hn);
     c.appendChild(d);
   });
   renderStep();
 }
+function localSeat(){ return H.seats.findIndex(s=>s.local); }
+function playLocal(dropIdx, knockOnly){
+  const G=H.G, i=localSeat();
+  if(!G||G.done||G.turn!==i) return;
+  const mv = knockOnly ? {take:null,drop:null,knock:true}
+                       : {take:H.taken, drop:dropIdx, knock:G.knockRule==="same"&&!!H.knockWith};
+  if(!applyMove(G,i,mv).ok) return;
+  H.taken=null; H.knockWith=false;
+  if(G.done){ H.ranked=showdown(G.hands.map((cards,x)=>({i:x,cards}))); G.winners=H.ranked.filter(e=>e.place===1).map(e=>e.i); }
+  render(); pushAll();
+}
 function renderStep(){
-  const G=H.G, anyOpen=H.seats.some((s,i)=>LINKS[i]&&LINKS[i].state==="open");
+  const G=H.G, anyOpen=H.seats.some((s,i)=>!s.local&&LINKS[i]&&LINKS[i].state==="open");
   let n=1,t="",btn="Deal";
   if(!anyOpen){
-    t="Invite a player. AirDrop the link to their phone, open it there, then AirDrop their reply straight back to this device.";
+    t="You are in as "+H.seats[0].n+". Invite a player: AirDrop the link to their phone, open it there, then AirDrop their reply straight back to this device.";
   } else if(!G){
     n=2; t="Everyone connected? Deal. Each phone gets three cards and the table gets three, two down and one up.";
   } else if(!G.done){
     n=3; btn="Deal";
-    const who=H.seats[G.turn]?H.seats[G.turn].n:"–";
+    const who=G.turn===localSeat() ? "Your go" : (H.seats[G.turn]?H.seats[G.turn].n+" to go":"–");
     t = G.knockedBy!==null
-      ? H.seats[G.knockedBy].n+" knocked. "+who+" to go, "+G.toGo+" more "+(G.toGo===1?"swap":"swaps")+" before the show."
-      : who+" to go. They take one from the table and put one back in its place.";
+      ? H.seats[G.knockedBy].n+" knocked. "+who+", "+G.toGo+" more "+(G.toGo===1?"swap":"swaps")+" before the show."
+      : who+". Take one from the table and put one back in its place.";
   } else {
     n=4; btn="Deal";
-    const w=(G.winners||[]).map(i=>H.seats[i].n);
-    t = (w.length>1 ? w.join(" and ")+" split it with "+rankHand(G.hands[G.winners[0]]).name+"."
-                    : w[0]+" wins with "+rankHand(G.hands[G.winners[0]]).name+".")+" Deal for the next hand.";
+    const ws=(G.winners||[]), w=ws.map(i=>H.seats[i].n);
+    const hadName=rankHand(G.hands[ws[0]]).name;
+    const youOnly = ws.length===1 && H.seats[ws[0]].local;
+    t = (w.length>1 ? w.join(" and ")+" split it with "+hadName+"."
+                    : (youOnly ? "You win with "+hadName+"." : w[0]+" wins with "+hadName+"."))
+        +" Deal for the next hand.";
   }
   $("#stepNo").textContent=n; $("#stepTxt").textContent=t;
   $("#deal").textContent=btn;
   $("#deal").disabled=!anyOpen;
+  const full=H.seats.length>=MAXSEATS;
+  $("#addSeat").disabled=full;
+  $("#addSeat").textContent = full ? "Table full (10)" : "Invite a player ("+H.seats.length+"/10)";
   $("#hostTip").innerHTML = H.knockRule==="same"
     ? "House rule: a player swaps and may knock on the same go. Tap <u>swap &amp; knock</u> above to switch to knocking on your next go instead."
     : "House rule: a player either swaps or knocks, so knocking costs you a go. Tap <u>knock next go</u> above to switch back.";
 }
 
 $("#addSeat").onclick=async()=>{
-  let i=H.seats.findIndex((s,k)=>!LINKS[k]);
-  if(i<0){ H.seats.push({n:"Seat "+(H.seats.length+1)}); i=H.seats.length-1; }
+  let i=H.seats.findIndex((s,k)=>!s.local && !LINKS[k]);
+  if(i<0){
+    if(H.seats.length>=MAXSEATS) return;
+    H.seats.push({n:"Player "+H.seats.length}); i=H.seats.length-1;
+  }
   saveHost(); render();
   await inviteSeat(i);
 };
 $("#deal").onclick=()=>{
-  H.round++;
+  H.round++; H.taken=null; H.knockWith=false;
   H.G=newHand(H.seed,H.round,H.seats.length,H.knockRule);
   H.ranked=null;
   saveHost(); render(); pushAll();
@@ -666,10 +756,17 @@ async function joinTable(packedOffer){
   pc.onconnectionstatechange=()=>{
     if(pc.connectionState==="failed"){ P.net="failed"; drawHand(); }
   };
+  step("Reading the invite");
   await pc.setRemoteDescription(unpackSDP(packedOffer,"offer"));
+  step("Making your reply");
   await pc.setLocalDescription(await pc.createAnswer());
-  await gathered(pc);
-  return packSDP(pc.localDescription.sdp);
+  step("Finding a route to the table");
+  await gathered(pc, n=>step("Finding a route to the table \u2014 "+n+" found"));
+  const packed=packSDP(pc.localDescription.sdp);
+  const n=countCands(packed);
+  if(n===0) throw new Error("This phone found no way to reach the table. Check it is on the same wi-fi as the dealer, not mobile data.");
+  step(n+" route"+(n===1?"":"s")+" found");
+  return packed;
 }
 function send(o){ if(P.dc&&P.dc.readyState==="open"){ try{P.dc.send(JSON.stringify(o));}catch(e){} } }
 
@@ -865,14 +962,35 @@ $("#bePlayer").onclick=()=>{
     };
   } else if(p&&p.a){                // a reply arriving on the dealer's device
     $("#gate").classList.remove("on"); $("#relay").classList.add("on");
-    const payload={seat:+(p.s||0),sdp:p.a,at:Date.now()};
-    let posted=false;
-    try{ const ch=new BroadcastChannel("brag46"); ch.postMessage({t:"answer",...payload}); posted=true; }catch(e){}
-    try{ localStorage.setItem("brag.reply",JSON.stringify(payload)); posted=true; }catch(e){}
-    if(!posted){
-      $("#relayH").textContent="Could not pass the reply on";
-      $("#relayP").textContent="Open the game tab on this device and try the invite again.";
-    }
+    const seat=+(p.s||0), payload={seat,sdp:p.a,at:Date.now()};
+    $("#relayH").textContent="Passing the reply over\u2026";
+    $("#relayP").textContent="Hold on.";
+    let acked=false;
+    const good=()=>{
+      if(acked) return; acked=true;
+      $("#relayH").textContent="That one is in";
+      $("#relayP").textContent="Close this tab and go back to the game \u2014 the seat is connected.";
+    };
+    let ch=null;
+    try{
+      ch=new BroadcastChannel("brag46");
+      ch.onmessage=e=>{ if(e.data&&e.data.t==="ack"&&e.data.seat===seat) good(); };
+      ch.postMessage({t:"answer",...payload});
+    }catch(e){}
+    try{ localStorage.setItem("brag.reply",JSON.stringify(payload)); }catch(e){}
+    const poll=setInterval(()=>{
+      try{
+        const a=JSON.parse(localStorage.getItem("brag.ack")||"null");
+        if(a&&a.seat===seat&&a.at>=payload.at-2000) good();
+      }catch(e){}
+    },300);
+    setTimeout(()=>{
+      clearInterval(poll);
+      if(acked) return;
+      $("#relayH").textContent="The game did not pick this up";
+      $("#relayP").innerHTML="The dealer's table needs to still be open on this device. "
+        +"If it closed, reopen it, press Invite again and send a fresh reply.";
+    },4000);
   }
 })();
 document.addEventListener("gesturestart",e=>e.preventDefault());
