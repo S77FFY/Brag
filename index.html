@@ -3,14 +3,14 @@
   Brag — multi-device 3 card brag
   Copyright (c) 2026 Ben Stiff @ Room46.uk. All rights reserved.
   No copying, redistribution or rehosting without permission.
-  HO·Ben Stiff @ Room46.uk·0.1.2·2026-11-22·bg7d2f
+  HO·Ben Stiff @ Room46.uk·0.1.3·2026-11-22·bg7d2f
 -->
-<html lang="en" data-build="HO·Ben Stiff @ Room46.uk·0.1.2·2026-11-22·bg7d2f">
+<html lang="en" data-build="HO·Ben Stiff @ Room46.uk·0.1.3·2026-11-22·bg7d2f">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="app-repo" content="Brag">
-<meta name="app-version" content="0.1.2">
+<meta name="app-version" content="0.1.3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0d241d">
 <title>Brag</title>
@@ -73,7 +73,9 @@ button[disabled]{opacity:.35}
 .scroller{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 20px 8px;min-height:0}
 .hostbar{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
 .hostbar h2{margin:0;font-weight:400;font-size:26px;letter-spacing:.03em}
-.round{margin-left:auto;font:400 15px/1 ui-monospace,Menlo,monospace;color:var(--dim)}
+.round{margin-left:auto;font:400 15px/1 ui-monospace,Menlo,monospace;color:var(--dim);
+  cursor:pointer;padding:4px 0}
+.round u{text-decoration:none;border-bottom:1px dotted var(--felt-line)}
 .rule{height:1px;background:var(--felt-line);margin:14px 0 20px}
 .seats{display:flex;gap:22px;flex-wrap:wrap;align-content:flex-start}
 .seat{width:178px;position:relative}
@@ -82,7 +84,12 @@ button[disabled]{opacity:.35}
 .seat.waiting h3{color:var(--dim)}
 .badge{font:400 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;border:1px solid var(--felt-line);padding:4px 6px;border-radius:2px;color:var(--dim)}
 .badge.sent{color:var(--brass);border-color:var(--brass)}
-.seat .mini{display:flex;gap:5px;height:74px}
+.seat .mini{display:flex;gap:5px;height:74px;cursor:pointer}
+.seat.out{opacity:.34}
+.seat.won h3{color:var(--brass)}
+.hand-name{font:400 13px/1.5 Georgia,serif;color:var(--chalk);margin-top:7px;min-height:1.5em}
+.seat.out .hand-name{color:var(--dim)}
+.seat.won .hand-name{color:var(--brass)}
 .seat .status{font:400 12px/1.6 ui-monospace,Menlo,monospace;color:var(--dim);margin-top:8px}
 .mc{width:50px;height:72px;border-radius:5px;background:var(--stock);color:var(--ink);
     display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -97,11 +104,8 @@ button[disabled]{opacity:.35}
 .controls{flex:0 0 auto;display:flex;gap:10px;flex-wrap:wrap;align-items:center;
   padding:14px 20px calc(14px + env(safe-area-inset-bottom));
   border-top:1px solid var(--felt-line);background:rgba(8,26,21,.96)}
-#deal{min-width:7.5em}
-.modes{display:flex;gap:0;margin-right:auto}
-.modes button{border-radius:0;border-right:none}
-.modes button:last-child{border-right:1px solid var(--felt-line)}
-.modes button.sel{background:var(--felt-line);color:#fff}
+#addSeat{margin-right:auto}
+#deal{min-width:8.5em}
 .tip{color:var(--dim);font-size:13px;max-width:52ch;padding-top:14px;padding-bottom:4px}
 .tx{color:var(--brass)}
 
@@ -198,33 +202,25 @@ body.handview .stamp,body.hostview .stamp{display:none}
     <div class="tip" id="hostTip"></div>
   </div>
   <div class="controls">
-    <div class="modes" id="modes">
-      <button data-mode="audio" class="sel">Audio</button>
-      <button data-mode="seed">Shared shuffle</button>
-    </div>
     <button id="addSeat">Invite a player</button>
-    <button id="repeat">Send again</button>
-    <button id="testTone">Test signal</button>
-    <button id="showAll">Turn them over</button>
-    <button id="reset">Clear table</button>
     <button class="primary" id="deal">Deal</button>
   </div>
 </section>
 
 <!-- ============ HAND ============ -->
 <section id="hand" class="screen">
-  <div class="handnote"><span class="who" id="whoLbl">Seat 1</span><span id="handState">waiting for the deal</span><span class="hcredit" id="hCredit">© 2026 Ben Stiff @ Room46.uk · v0.1.2</span></div>
+  <div class="handnote"><span class="who" id="whoLbl">Seat 1</span><span id="handState">waiting for the deal</span><span class="hcredit" id="hCredit">© 2026 Ben Stiff @ Room46.uk · v0.1.3</span></div>
   <div class="pile" id="pile"></div>
 </section>
 
-<div class="stamp" id="stamp">v0.1.2</div>
+<div class="stamp" id="stamp">v0.1.3</div>
 <div class="gatecredit" id="gateCredit">© 2026 Ben Stiff @ Room46.uk</div>
 <div id="dbg"></div>
 
 <script>
 "use strict";
-const VERSION = "0.1.2";
-const BUILD    = "HO\u00b7Ben Stiff @ Room46.uk\u00b70.1.2\u00b72026-11-22\u00b7bg7d2f";
+const VERSION = "0.1.3";
+const BUILD    = "HO\u00b7Ben Stiff @ Room46.uk\u00b70.1.3\u00b72026-11-22\u00b7bg7d2f";
 const LOCK_HOST = "";   // e.g. "s77ffy.github.io" — empty means no lock
 const HOME_URL  = "";   // e.g. "https://s77ffy.github.io/Brag/"
 (function lock(){
@@ -256,6 +252,65 @@ function dealHands(seed, round, seatCount){
   return out;
 }
 const cardRank=c=>RANKS[c%13], cardSuit=c=>SUITS[(c/13)|0], cardRed=c=>((c/13)|0)===1||((c/13)|0)===2;
+
+/* ===================== brag hand ranking ===================== */
+// Standard 3 card brag order. Two quirks that trip people up: a prial of
+// threes beats a prial of aces, and the run A-2-3 beats A-K-Q.
+const CAT=["high card","pair","flush","run","running flush","prial"];
+function rankHand(cards){
+  const r=cards.map(c=>c%13).sort((a,b)=>b-a);        // 0 = two ... 12 = ace
+  const su=cards.map(c=>(c/13)|0);
+  const flush = su[0]===su[1] && su[1]===su[2];
+  const set   = r[0]===r[1] && r[1]===r[2];
+  const a23   = r[0]===12 && r[1]===1 && r[2]===0;     // ace, three, two
+  const run   = a23 || (r[0]===r[1]+1 && r[1]===r[2]+1);
+  let cat, tie;
+  if(set){        cat=5; tie=[r[0]===1 ? 13 : r[0]]; }          // threes on top
+  else if(run && flush){ cat=4; tie=[a23 ? 13 : r[0]]; }
+  else if(run){   cat=3; tie=[a23 ? 13 : r[0]]; }
+  else if(flush){ cat=2; tie=r.slice(); }
+  else if(r[0]===r[1] || r[1]===r[2]){                           // pair
+    const pr = r[1], kick = (r[0]===r[1]) ? r[2] : r[0];
+    cat=1; tie=[pr,kick];
+  }
+  else { cat=0; tie=r.slice(); }
+  return {cat, tie, name:handName(cat,tie,r,a23)};
+}
+function handName(cat,tie,r,a23){
+  const N=["two","three","four","five","six","seven","eight","nine","ten","jack","queen","king","ace"];
+  const P=["twos","threes","fours","fives","sixes","sevens","eights","nines","tens","jacks","queens","kings","aces"];
+  if(cat===5) return "prial of "+P[r[0]];
+  if(cat===4||cat===3){
+    const label = a23 ? "ace\u2013three\u2013two" : N[r[0]]+" high";
+    return (cat===4?"running flush, ":"run, ")+label;
+  }
+  // spell out every card for the two kinds that are decided on kickers,
+  // so two "jack high" hands never look like a tie when they are not
+  const SH=["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
+  const three = SH[r[0]]+" "+SH[r[1]]+" "+SH[r[2]];
+  if(cat===2) return three+" flush";
+  if(cat===1) return "pair of "+P[tie[0]]+", "+SH[tie[1]]+" with it";
+  return three+" high";
+}
+function compareHands(a,b){
+  if(a.cat!==b.cat) return b.cat-a.cat;
+  for(let i=0;i<Math.max(a.tie.length,b.tie.length);i++){
+    const x=a.tie[i]||0, y=b.tie[i]||0;
+    if(x!==y) return y-x;
+  }
+  return 0;
+}
+// seats: [{i, cards}] -> ranked best first, with ties sharing a place
+function showdown(entries){
+  const ranked = entries.map(e=>({...e, hand:rankHand(e.cards)}));
+  ranked.sort((x,y)=>compareHands(x.hand,y.hand));
+  let place=1;
+  ranked.forEach((e,i)=>{
+    if(i>0 && compareHands(ranked[i-1].hand,e.hand)!==0) place=i+1;
+    e.place=place;
+  });
+  return ranked;
+}
 
 /* ===================== per-seat keystream ===================== */
 async function keystream(key, round, seat, n){
@@ -404,14 +459,10 @@ function hostBoot(){
   $("#hostCredit").textContent="\u00a9 2026 Ben Stiff @ Room46.uk \u00b7 v"+VERSION;
   $("#hostCredit").onclick=toggleDbg;
   renderSeats(); renderTip();
-  $("#modes").querySelectorAll("button").forEach(b=>{
-    b.classList.toggle("sel", b.dataset.mode===H.mode);
-    b.onclick=()=>{ H.mode=b.dataset.mode; saveHost(); hostBoot2(); };
-  });
-}
-function hostBoot2(){
-  $("#modes").querySelectorAll("button").forEach(b=>b.classList.toggle("sel", b.dataset.mode===H.mode));
-  renderTip();
+  $("#roundLbl").onclick = () => {
+    H.mode = H.mode==="audio" ? "seed" : "audio";
+    H.hands=[]; H.shown=false; saveHost(); renderSeats(); renderTip();
+  };
 }
 function saveHost(){ store.host={mode:H.mode,round:H.round,seed:H.seed,seats:H.seats}; }
 $("#addSeat").textContent="Invite a player";
@@ -419,6 +470,7 @@ function renderSeats(){
   const c=$("#seats"); c.innerHTML="";
   H.seats.forEach((s,i)=>{
     const d=el("div","seat"+(s.sent?"":" waiting"));
+    d.dataset.seat=i;
     const h=el("h3");
     h.appendChild(document.createTextNode(s.n));
     const bg=el("span","badge"+(s.sent?" sent":"")); bg.textContent=s.sent?"invited":"no phone";
@@ -433,27 +485,47 @@ function renderSeats(){
       const card=el("div","mc");
       const hand=H.hands[i];
       if(!hand) card.classList.add("empty");
-      else if(!H.shown) card.classList.add("down");
+      else if(!H.shown || s.out) card.classList.add("down");
       else{ const cc=hand[j]; card.innerHTML=`${cardRank(cc)}<span>${cardSuit(cc)}</span>`; if(cardRed(cc)) card.classList.add("red"); }
       m.appendChild(card);
     }
     d.appendChild(m);
-    const st=el("div","status"); st.textContent = H.mode==="audio" ? "key "+s.k.slice(0,6) : "shuffle "+H.seed;
+    const hn=el("div","hand-name");
+    if(s.out) hn.textContent="folded";
+    else if(H.shown && H.hands[i]) hn.textContent=rankHand(H.hands[i]).name;
+    d.appendChild(hn);
+    const st=el("div","status");
+    st.textContent = H.mode==="audio" ? "key "+s.k.slice(0,6) : "shuffle "+H.seed;
+    st.title="Send this hand again";
+    st.onclick=(e)=>{ e.stopPropagation(); if(H.mode==="audio"&&H.hands.length){ audio(); sendDeal(); } };
     d.appendChild(st);
+    m.onclick=()=>{ if(!H.hands.length) return; s.out=!s.out; H.shown=false; saveHost(); renderSeats(); };
+    if(s.out) d.classList.add("out");
+    if(H.shown && H.winners && H.winners.indexOf(i)>=0) d.classList.add("won");
     c.appendChild(d);
   });
-  $("#roundLbl").textContent="hand "+H.round+(AC?" \u00b7 audio "+AC.state:"");
-  $("#showAll").disabled = !H.hands.length;
-  $("#repeat").disabled = !H.hands.length || H.mode!=="audio";
+  $("#roundLbl").innerHTML = "hand "+H.round+" \u00b7 <u>"
+    + (H.mode==="audio" ? "audio"+(AC?" "+AC.state:"") : "shared shuffle") + "</u>";
   renderStep();
 }
 function renderStep(){
-  const sent=H.seats.filter(s=>s.sent).length;
-  let n=1,t="";
-  if(!sent) t="Invite a player. The share sheet opens \u2014 AirDrop the link to each phone, then open it there.";
-  else if(!H.hands.length){ n=2; t="Turn the iPad volume up and the mute switch off, then press Deal. Test signal first if you want to check the phones can hear."; }
-  else { n=3; t="Hand "+H.round+" is out to "+H.seats.length+(H.seats.length===1?" seat":" seats")+". Deal again for the next hand, or Send again if a phone missed it."; }
+  const sent=H.seats.filter(s=>s.sent).length, live=H.seats.filter(s=>!s.out).length;
+  let n=1,t="",btn="Deal";
+  if(!sent) t="Invite a player. The share sheet opens \u2014 AirDrop the link to each phone and open it there.";
+  else if(!H.hands.length){ n=2; t="Volume up, mute switch off, then Deal. Each phone gets its own three cards."; }
+  else if(!H.shown){ n=3; btn="Show hands";
+    t="Hand "+H.round+" is out. Bet it out at the table, then tap a player to fold them. Show hands when you are down to the last bets."; }
+  else {
+    n=4; btn="Deal";
+    const w=(H.winners||[]).map(i=>H.seats[i].n);
+    t = w.length ? (w.length>1 ? w.join(" and ")+" split it with "+rankHand(H.hands[H.winners[0]]).name+"."
+                               : w[0]+" wins with "+rankHand(H.hands[H.winners[0]]).name+".")
+                 : "Everyone folded.";
+    t += " Deal for the next hand.";
+  }
   $("#stepNo").textContent=n; $("#stepTxt").textContent=t;
+  $("#deal").textContent=btn;
+  renderTip();
 }
 function dropSeat(i){
   H.seats.splice(i,1);
@@ -463,8 +535,8 @@ function dropSeat(i){
 function flash(sel,txt,ms){ const b=$(sel), o=b.textContent; b.textContent=txt; b.classList.add("tx"); setTimeout(()=>{b.textContent=o;b.classList.remove("tx");},ms); }
 function renderTip(){
   $("#hostTip").innerHTML = H.mode==="audio"
-    ? "Turn the mute switch off and the volume up on this device. Each hand is sent as a two second chirp; only the phone holding the matching key can read its own cards."
-    : "No signal is sent. Every phone works out its own cards from the shared shuffle, so keep the hand number here matching the one on the phones.";
+    ? "Each hand goes out as a chirp from this device; only the phone holding the matching key can read its own cards. Tap a key line to send that hand again. Tap <u>audio</u> above to switch transport."
+    : "No signal is sent \u2014 every phone works out its own cards from the shared shuffle, so anyone technical could work out yours too. Tap <u>shared shuffle</u> above to go back to audio.";
 }
 $("#addSeat").onclick = async () => {
   audio();
@@ -478,25 +550,26 @@ $("#addSeat").onclick = async () => {
     if(navigator.share) await navigator.share({title:"Brag \u2013 "+seat.n, url});
     else ok = !!prompt("AirDrop or send this link to the player:", url);
   }catch(e){ ok=false; }                            // share sheet cancelled
-  if(ok){ seat.sent=true; H.hands=[]; }
-  saveHost(); renderSeats();
-};
-$("#reset").onclick = () => {
-  if(H.seats.some(s=>s.sent) && !confirm("Clear the table and start again? Every phone will need a new invite.")) return;
-  H.seats=[{n:"Seat 1",k:randKey()}]; H.hands=[]; H.round=0; H.seed=randKey().slice(0,8);
+  if(ok){ seat.sent=true; H.hands=[]; H.shown=false; }
   saveHost(); renderSeats();
 };
 $("#deal").onclick = async () => {
   audio();                       // must happen inside the tap, before any await
-  H.round++; H.shown=false;
+  if(H.hands.length && !H.shown){ reveal(); return; }
+  H.round++; H.shown=false; H.winners=null;
+  H.seats.forEach(s=>s.out=false);
   H.hands = dealHands(H.seed, H.round, H.seats.length);
   saveHost(); renderSeats();
   if(H.mode==="audio") await sendDeal();
 };
-$("#repeat").onclick = () => { audio(); if(H.mode==="audio") sendDeal(); };
-$("#testTone").onclick = () => { audio(); transmit([255,0]); flash("#testTone","Sending\u2026",1400); };
+function reveal(){
+  const live = H.seats.map((s,i)=>({i,cards:H.hands[i]})).filter(e=>!H.seats[e.i].out);
+  if(!live.length) return;
+  const ranked = showdown(live);
+  H.winners = ranked.filter(e=>e.place===1).map(e=>e.i);
+  H.shown = true; saveHost(); renderSeats();
+}
 document.addEventListener("visibilitychange", ()=>{ if(!document.hidden && AC) AC.resume(); });
-$("#showAll").onclick = () => { H.shown=!H.shown; renderSeats(); $("#showAll").textContent = H.shown?"Turn them back":"Turn them over"; };
 
 async function sendDeal(){
   const r=H.round & 0xff;
@@ -506,8 +579,10 @@ async function sendDeal(){
     for(let j=0;j<3;j++) body.push(H.hands[s][j] ^ ks[j]);
   }
   const ms=transmit(body);
-  const b=$("#deal"); b.classList.add("tx"); b.textContent="Sending\u2026";
-  setTimeout(()=>{ b.classList.remove("tx"); b.textContent="Deal"; }, ms+150);
+  setTimeout(()=>transmit(body), ms+260);          // second pass: a missed chirp is rare
+  const b=$("#deal"); b.classList.add("tx");
+  const was=b.textContent; b.textContent="Sending\u2026";
+  setTimeout(()=>{ b.classList.remove("tx"); renderStep(); }, ms*2+420);
 }
 
 /* ===================== HAND ===================== */
