@@ -1,195 +1,213 @@
 <!DOCTYPE html>
 <!--
-  Brag — multi-device 3 card brag
+  Brag — bastard brag across devices, no server
   Copyright (c) 2026 Ben Stiff @ Room46.uk. All rights reserved.
   No copying, redistribution or rehosting without permission.
-  HO·Ben Stiff @ Room46.uk·0.1.3·2026-11-22·bg7d2f
+  Card graphics carried over from the Noms project.
+  HO·Ben Stiff @ Room46.uk·0.2.0·2026-11-22·bg7d2f
 -->
-<html lang="en" data-build="HO·Ben Stiff @ Room46.uk·0.1.3·2026-11-22·bg7d2f">
+<html lang="en" data-build="HO·Ben Stiff @ Room46.uk·0.2.0·2026-11-22·bg7d2f">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="app-repo" content="Brag">
-<meta name="app-version" content="0.1.3">
+<meta name="app-version" content="0.2.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0d241d">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#05070f">
 <title>Brag</title>
 <style>
+/* palette carried over from Noms */
 :root{
-  --felt:#0f2b23;
-  --felt-deep:#081a15;
-  --felt-line:#1c473a;
-  --stock:#f3ede0;
-  --ink:#191512;
-  --pip-red:#b0231d;
-  --brass:#c9a227;
-  --chalk:#d8cfbb;
-  --dim:#7d9086;
-  --ch:340px; --cw:238px; --sink:75px;
+  --felt:#05070f; --felt2:#0d1430; --panel:#0c1226;
+  --purple:#a855f7; --purple-dk:#6d28d9;
+  --bone:#e9f2ff; --bone-dim:#8fa3c8; --paper:#f7f1df;
+  --gold:#22d3ee; --gold-hi:#8bf6ff; --gold-dk:#0b7f96;
+  --turn:#f2c96e; --turn-hi:#ffe9a8;
+  --line:rgba(139,246,255,.16);
+  --cw:96px; --tw:62px; --sink:40px;
+  --glow:0 0 24px rgba(34,211,238,.45);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
 body{
-  background:
-    radial-gradient(120% 90% at 50% 0%, #17392e 0%, var(--felt) 45%, var(--felt-deep) 100%);
-  color:var(--chalk);
+  background:radial-gradient(120% 90% at 50% 0%, var(--felt2) 0%, var(--felt) 60%, #01020a 100%);
+  color:var(--bone);
   font:16px/1.45 Georgia,"Iowan Old Style","Times New Roman",serif;
-  -webkit-user-select:none;user-select:none;
-  touch-action:none;
+  -webkit-user-select:none;user-select:none;touch-action:none;
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 .screen{position:fixed;inset:0;display:none;flex-direction:column}
 .screen.on{display:flex}
-
-/* ---------- shared bits ---------- */
 button{
-  font:inherit;color:var(--chalk);background:transparent;
-  border:1px solid var(--felt-line);border-radius:2px;
-  padding:.7em 1.1em;cursor:pointer;
+  font:inherit;color:var(--bone);background:transparent;
+  border:1px solid var(--line);border-radius:3px;padding:.7em 1.1em;cursor:pointer;
 }
-button:active{background:#16382d}
-button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
-button.primary{background:var(--brass);border-color:var(--brass);color:#20180a;font-weight:700}
-button.primary:active{background:#b08c1c}
-button[disabled]{opacity:.35}
-.stamp{
-  position:fixed;right:12px;bottom:8px;z-index:60;
-  font:11px/1 ui-monospace,Menlo,monospace;color:var(--dim);opacity:.55;
-  padding:6px;
+button:active{background:rgba(139,246,255,.09)}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+button.primary{background:var(--gold);border-color:var(--gold);color:#04212a;font-weight:700;box-shadow:var(--glow)}
+button.primary:active{background:var(--gold-dk);color:#dff9ff}
+button.knock{border-color:var(--turn);color:var(--turn);padding:.55em .95em}
+button.knock.armed{background:var(--turn);color:#2a1f05;font-weight:700}
+button[disabled]{opacity:.32}
+.mono{font-family:ui-monospace,Menlo,monospace}
+
+/* ---------------- cards (from Noms) ---------------- */
+.card{
+  position:relative;width:var(--cw);height:calc(var(--cw)*1.4);border-radius:9%;
+  background:#fbf7ec;border:1px solid #cfc2a4;color:#221b26;
+  box-shadow:0 2px 6px rgba(0,0,0,.45);flex:none;user-select:none;
+  font-size:var(--cw);
 }
-
-/* ---------- gate ---------- */
-#gate{align-items:center;justify-content:center;text-align:center;padding:32px;gap:18px}
-#gate h1{font-size:38px;margin:0;letter-spacing:.04em;font-weight:400}
-#gate p{max-width:30ch;color:var(--dim);margin:0;font-size:15px}
-.roles{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
-
-/* ---------- host ---------- */
-#host{padding:0;overflow:hidden}
-.hosthead{flex:0 0 auto;padding:16px 20px 0}
-.credit{font:400 10px/1 ui-monospace,Menlo,monospace;color:var(--dim);opacity:.4;letter-spacing:.08em;margin-bottom:12px}
-.step{display:flex;gap:10px;align-items:baseline;margin-top:14px;font-size:15px;color:var(--chalk)}
-.step b{color:var(--brass);font-weight:400;font-size:13px;font-family:ui-monospace,Menlo,monospace}
-.scroller{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 20px 8px;min-height:0}
-.hostbar{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
-.hostbar h2{margin:0;font-weight:400;font-size:26px;letter-spacing:.03em}
-.round{margin-left:auto;font:400 15px/1 ui-monospace,Menlo,monospace;color:var(--dim);
-  cursor:pointer;padding:4px 0}
-.round u{text-decoration:none;border-bottom:1px dotted var(--felt-line)}
-.rule{height:1px;background:var(--felt-line);margin:14px 0 20px}
-.seats{display:flex;gap:22px;flex-wrap:wrap;align-content:flex-start}
-.seat{width:178px;position:relative}
-.seat h3{margin:0 0 10px;font-weight:400;font-size:19px;display:flex;align-items:center;gap:8px}
-.seat h3 .drop{margin-left:auto;border:none;padding:2px 7px;font-size:17px;color:var(--dim);line-height:1}
-.seat.waiting h3{color:var(--dim)}
-.badge{font:400 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;border:1px solid var(--felt-line);padding:4px 6px;border-radius:2px;color:var(--dim)}
-.badge.sent{color:var(--brass);border-color:var(--brass)}
-.seat .mini{display:flex;gap:5px;height:74px;cursor:pointer}
-.seat.out{opacity:.34}
-.seat.won h3{color:var(--brass)}
-.hand-name{font:400 13px/1.5 Georgia,serif;color:var(--chalk);margin-top:7px;min-height:1.5em}
-.seat.out .hand-name{color:var(--dim)}
-.seat.won .hand-name{color:var(--brass)}
-.seat .status{font:400 12px/1.6 ui-monospace,Menlo,monospace;color:var(--dim);margin-top:8px}
-.mc{width:50px;height:72px;border-radius:5px;background:var(--stock);color:var(--ink);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    font-size:21px;box-shadow:0 2px 6px rgba(0,0,0,.4)}
-.mc.red{color:var(--pip-red)}
-.mc.down{
+.card.red{color:#c0392b}
+.corner{position:absolute;top:4%;left:6%;text-align:center;line-height:1.02}
+.corner b{display:block;font-family:Georgia,serif;font-size:.21em;font-weight:700}
+.corner i{display:block;font-style:normal;font-size:.17em}
+.corner.br{top:auto;left:auto;bottom:4%;right:6%;transform:rotate(180deg)}
+.pip{position:absolute;transform:translate(-50%,-50%);font-size:.22em;line-height:1}
+.pip.f{transform:translate(-50%,-50%) rotate(180deg)}
+.apip{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:.52em;line-height:1}
+.apip.asp{font-size:.66em;text-shadow:0 0 1px #221b26}
+.court{position:absolute;inset:16% 18%;border:2px double currentColor;border-radius:8%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2%}
+.court .cl{font-family:Georgia,serif;font-size:.4em;font-weight:700;line-height:1}
+.court .cs{font-size:.2em;line-height:1}
+.card.back{
   background:
-    repeating-linear-gradient(45deg,#7d1f1a 0 5px,#5f1713 5px 10px);
-  border:2px solid var(--stock);
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,.28) 0 5.5%, rgba(255,255,255,0) 6.5%),
+    repeating-linear-gradient(45deg, rgba(139,246,255,.20) 0 1.5px, transparent 1.5px 7px),
+    repeating-linear-gradient(-45deg, rgba(139,246,255,.20) 0 1.5px, transparent 1.5px 7px),
+    linear-gradient(155deg,#7b3ff2,#1b2ea8);
+  border:2px solid #cfe9ff;
 }
-.mc.empty{background:none;border:1px dashed var(--felt-line);box-shadow:none}
+.card.back::after{content:'';position:absolute;inset:7%;border:1.5px solid rgba(255,255,255,.55);border-radius:8%}
+.card.slim{border-radius:7%}
+@keyframes dealin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.dealin{animation:dealin .3s ease-out both}
+
+/* ---------------- gate ---------------- */
+#gate{align-items:center;justify-content:center;text-align:center;padding:30px;gap:16px}
+#gate h1{font-size:40px;margin:0;font-weight:400;letter-spacing:.06em;
+  background:linear-gradient(180deg,var(--gold-hi),var(--gold));-webkit-background-clip:text;
+  background-clip:text;color:transparent;text-shadow:none}
+#gate .suits{font-size:19px;letter-spacing:12px;margin-right:-12px;color:var(--gold);opacity:.75}
+#gate .suits .r{color:var(--purple)}
+#gate p{max-width:32ch;color:var(--bone-dim);margin:0;font-size:15px}
+.roles{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+
+/* ---------------- host ---------------- */
+#host{padding:0;overflow:hidden}
+.hosthead{flex:0 0 auto;padding:14px 18px 0}
+.credit{font:400 10px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);opacity:.4;letter-spacing:.08em;margin-bottom:10px}
+.hostbar{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.hostbar h2{margin:0;font-weight:400;font-size:25px;letter-spacing:.03em}
+.round{margin-left:auto;font:400 14px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);cursor:pointer}
+.round u{text-decoration:none;border-bottom:1px dotted var(--line)}
+.step{display:flex;gap:10px;align-items:baseline;margin-top:12px;font-size:15px}
+.step b{color:var(--gold);font-weight:400;font-size:13px;font-family:ui-monospace,Menlo,monospace}
+.rule{height:1px;background:var(--line);margin:12px 0 0}
+.scroller{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 18px 8px;min-height:0}
+.boardlbl{font:400 11px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);letter-spacing:.1em;margin-bottom:9px}
+.board{display:flex;gap:10px;margin-bottom:18px}
+.board .card{--cw:var(--tw)}
+.seats{display:flex;gap:20px;flex-wrap:wrap;align-content:flex-start}
+.seat{width:200px;position:relative;padding-left:12px;border-left:2px solid transparent}
+.seat h3{margin:0 0 9px;font-weight:400;font-size:18px;display:flex;align-items:center;gap:8px}
+.seat h3 .drop{margin-left:auto;border:none;padding:2px 7px;font-size:17px;color:var(--bone-dim);line-height:1}
+.seat .mini{display:flex;gap:5px}
+.seat .mini .card{--cw:46px}
+.seat.live h3{color:var(--gold-hi)}
+.seat.now{border-left-color:var(--turn)}
+.seat.now h3{color:var(--turn)}
+.seat.won h3{color:var(--gold-hi);text-shadow:var(--glow)}
+.badge{font:400 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;border:1px solid var(--line);
+  padding:4px 6px;border-radius:2px;color:var(--bone-dim)}
+.badge.sent{color:var(--purple);border-color:var(--purple-dk)}
+.badge.on{color:var(--gold);border-color:var(--gold-dk)}
+.hand-name{font:400 13px/1.5 Georgia,serif;color:var(--bone);margin-top:8px;min-height:1.5em}
+.seat.won .hand-name{color:var(--gold-hi)}
+.tip{color:var(--bone-dim);font-size:13px;max-width:54ch;padding-top:14px}
+.tip u{text-decoration:none;border-bottom:1px dotted var(--line)}
 .controls{flex:0 0 auto;display:flex;gap:10px;flex-wrap:wrap;align-items:center;
-  padding:14px 20px calc(14px + env(safe-area-inset-bottom));
-  border-top:1px solid var(--felt-line);background:rgba(8,26,21,.96)}
+  padding:13px 18px calc(13px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--line);background:rgba(5,7,15,.96)}
 #addSeat{margin-right:auto}
 #deal{min-width:8.5em}
-.tip{color:var(--dim);font-size:13px;max-width:52ch;padding-top:14px;padding-bottom:4px}
-.tx{color:var(--brass)}
 
-/* ---------- hand ---------- */
+/* ---------------- hand ---------------- */
 #hand{overflow:hidden}
-.handnote{
-  position:absolute;top:0;left:0;right:0;padding:26px 16px 0;z-index:5;
-  display:flex;align-items:baseline;gap:12px;
-  font:400 13px/1.4 ui-monospace,Menlo,monospace;color:var(--dim);
-}
-#handState{flex:1 1 auto;min-width:0;text-align:right}
-.handnote .who{font:400 17px/1 Georgia,serif;color:var(--chalk);flex:0 0 auto;white-space:nowrap}
+.topbar{position:absolute;top:0;left:0;right:0;z-index:7;padding:24px 14px 0;text-align:center;pointer-events:none}
+.topbar .tablerow{pointer-events:auto}
 .hcredit{position:absolute;top:7px;left:0;right:0;text-align:center;
-  font:400 9px/1 ui-monospace,Menlo,monospace;color:var(--dim);opacity:.3;letter-spacing:.14em;padding:4px}
-body.handview .stamp,body.hostview .stamp{display:none}
+  font:400 9px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);opacity:.3;letter-spacing:.14em}
+.whose{font:400 15px/1.2 Georgia,serif;color:var(--bone-dim);margin-bottom:12px;min-height:1.2em}
+.whose.you{color:var(--turn);text-shadow:0 0 16px rgba(242,201,110,.5)}
+.whose b{font-weight:400;color:var(--turn)}
+.whose.you{font-size:17px}
+.tablerow{position:absolute;left:0;right:0;display:flex;gap:10px;justify-content:center;z-index:6}
+.tslot{position:relative}
+.tslot .card{--cw:var(--tw)}
+.tslot.pick .card{box-shadow:0 0 0 2px var(--turn),0 4px 12px rgba(0,0,0,.5);cursor:pointer}
+.tslot.pick{transform:translateY(-6px);transition:transform .2s}
+.tslot.gone{opacity:.25}
 .pile{position:absolute;inset:0}
 .slot{
-  position:absolute;left:50%;width:var(--cw);height:var(--ch);
+  position:absolute;left:50%;width:var(--cw);height:calc(var(--cw)*1.4);
   bottom:calc(var(--sink) * -1);margin-left:calc(var(--cw) / -2);
   transform-origin:50% 140%;perspective:1400px;
-  transition:transform .34s cubic-bezier(.25,.9,.3,1),transform-origin .34s,opacity .3s;
+  transition:transform .3s cubic-bezier(.25,.9,.3,1),opacity .3s;
   will-change:transform;
 }
-.flipper{
-  position:absolute;inset:0;transform-style:preserve-3d;
-  transition:transform .38s cubic-bezier(.3,.8,.3,1);
-}
+.flipper{position:absolute;inset:0;transform-style:preserve-3d;
+  transition:transform .4s cubic-bezier(.3,.8,.3,1)}
 .slot.up .flipper{transform:rotateY(180deg)}
-.face{
-  position:absolute;inset:0;border-radius:calc(var(--ch) * .045);backface-visibility:hidden;
-  -webkit-backface-visibility:hidden;
-  box-shadow:0 6px 18px rgba(0,0,0,.5);
-}
-.back{
-  background:
-    repeating-linear-gradient(45deg,#7d1f1a 0 calc(var(--ch)*.026),#611814 calc(var(--ch)*.026) calc(var(--ch)*.052));
-  border:calc(var(--ch) * .022) solid var(--stock);
-}
-.front{
-  background:var(--stock);color:var(--ink);transform:rotateY(180deg);
-  border:1px solid #d9d0bd;border-radius:calc(var(--ch) * .045);
-  display:grid;grid-template-rows:auto 1fr auto;padding:calc(var(--ch) * .045) calc(var(--ch) * .052);
-}
-.front.red{color:var(--pip-red)}
-.front .r{font-size:calc(var(--ch) * .115);line-height:1;font-weight:700;letter-spacing:-.02em}
-.front .r span{display:block;font-size:calc(var(--ch) * .088);margin-top:.06em}
-.front .r.b{justify-self:end;transform:rotate(180deg)}
-.front .mid{align-self:center;justify-self:center;font-size:calc(var(--ch) * .30);line-height:1}
-.gone{opacity:0}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.face.front{transform:rotateY(180deg)}
+.slot.taken .card{box-shadow:0 0 0 2px var(--gold),0 6px 18px rgba(0,0,0,.55)}
+.gone{opacity:0;pointer-events:none}
+.actions{position:absolute;left:0;right:0;z-index:7;display:flex;gap:10px;
+  justify-content:center;pointer-events:none}
+.actions button{pointer-events:auto}
+.hint{position:absolute;left:0;right:0;z-index:6;text-align:center;
+  font:400 13px/1.4 Georgia,serif;color:var(--bone-dim);padding:0 20px}
 
-/* ---------- debug ---------- */
+/* ---------------- handoff / pairing ---------------- */
+#relay{align-items:center;justify-content:center;text-align:center;padding:30px;gap:14px}
+#relay h2{font-weight:400;margin:0;font-size:26px}
+#relay p{color:var(--bone-dim);max-width:32ch;margin:0}
+.net{font:400 11px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);letter-spacing:.06em}
+.net.good{color:var(--gold)}
+.net.bad{color:var(--purple)}
+
+.stamp{position:fixed;right:12px;bottom:8px;z-index:60;
+  font:11px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);opacity:.5;padding:6px}
+body.handview .stamp,body.hostview .stamp{display:none}
 .gatecredit{position:fixed;left:12px;bottom:8px;z-index:60;display:none;
-  font:400 11px/1 ui-monospace,Menlo,monospace;color:var(--dim);opacity:.55}
+  font:400 11px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);opacity:.5}
 .gatecredit.on{display:block}
-#dbg{
-  position:fixed;right:8px;bottom:8px;z-index:70;display:none;
-  width:236px;max-height:52vh;overflow:auto;
-  background:rgba(4,14,11,.93);border:1px solid var(--felt-line);border-radius:3px;
-  padding:9px 10px;font:11px/1.5 ui-monospace,Menlo,monospace;color:#9fb5a9;
-}
+#dbg{position:fixed;right:8px;bottom:8px;z-index:70;display:none;width:250px;max-height:54vh;
+  overflow:auto;background:rgba(4,8,18,.95);border:1px solid var(--line);border-radius:3px;
+  padding:9px 10px;font:11px/1.5 ui-monospace,Menlo,monospace;color:#9fb5c8}
 #dbg.on{display:block}
-#dbg b{color:var(--brass);font-weight:400}
-.bar{height:3px;background:var(--felt-line);margin-top:5px}
-.bar i{display:block;height:3px;background:var(--brass);width:0}
-@media (prefers-reduced-motion:reduce){.flipper{transition:none}}
+#dbg b{color:var(--gold);font-weight:400}
+@media (prefers-reduced-motion:reduce){.flipper,.slot,.tslot{transition:none}}
 </style>
 </head>
 <body>
 
-<!-- ============ GATE ============ -->
 <section id="gate" class="screen on">
   <h1>Brag</h1>
-  <p id="gateMsg">Pick this device's job. The iPad deals; phones are hands.</p>
+  <div class="suits">&#9824;<span class="r">&#9829;</span><span class="r">&#9830;</span>&#9827;</div>
+  <p id="gateMsg">Pick this device's job. One deals, the rest are hands.</p>
   <div class="roles">
     <button class="primary" id="beHost">Deal from this device</button>
     <button id="bePlayer">Join as a hand</button>
-    <button id="beSolo">Deal me one hand</button>
   </div>
 </section>
 
-<!-- ============ HOST ============ -->
 <section id="host" class="screen">
   <div class="hosthead">
-    <div class="credit" id="hostCredit">© 2026 Ben Stiff @ Room46.uk</div>
+    <div class="credit" id="hostCredit">&copy; 2026 Ben Stiff @ Room46.uk</div>
     <div class="hostbar">
       <h2>The table</h2>
       <div class="round" id="roundLbl">hand 0</div>
@@ -198,6 +216,10 @@ body.handview .stamp,body.hostview .stamp{display:none}
     <div class="rule"></div>
   </div>
   <div class="scroller">
+    <div id="boardWrap" style="display:none">
+      <div class="boardlbl">ON THE TABLE</div>
+      <div class="board" id="board"></div>
+    </div>
     <div class="seats" id="seats"></div>
     <div class="tip" id="hostTip"></div>
   </div>
@@ -207,87 +229,142 @@ body.handview .stamp,body.hostview .stamp{display:none}
   </div>
 </section>
 
-<!-- ============ HAND ============ -->
 <section id="hand" class="screen">
-  <div class="handnote"><span class="who" id="whoLbl">Seat 1</span><span id="handState">waiting for the deal</span><span class="hcredit" id="hCredit">© 2026 Ben Stiff @ Room46.uk · v0.1.3</span></div>
+  <div class="topbar">
+    <div class="hcredit" id="hCredit">&copy; 2026 Ben Stiff @ Room46.uk &middot; v0.2.0</div>
+    <div class="whose" id="whose">waiting for the deal</div>
+    <div class="tablerow" id="tablerow"></div>
+  </div>
+  <div class="hint" id="hint"></div>
   <div class="pile" id="pile"></div>
+  <div class="actions" id="actions"></div>
 </section>
 
-<div class="stamp" id="stamp">v0.1.3</div>
-<div class="gatecredit" id="gateCredit">© 2026 Ben Stiff @ Room46.uk</div>
+<section id="relay" class="screen">
+  <h2 id="relayH">Reply received</h2>
+  <p id="relayP">You can close this tab and go back to the game.</p>
+</section>
+
+<div class="stamp" id="stamp">v0.2.0</div>
+<div class="gatecredit" id="gateCredit">&copy; 2026 Ben Stiff @ Room46.uk</div>
 <div id="dbg"></div>
 
 <script>
 "use strict";
-const VERSION = "0.1.3";
-const BUILD    = "HO\u00b7Ben Stiff @ Room46.uk\u00b70.1.3\u00b72026-11-22\u00b7bg7d2f";
-const LOCK_HOST = "";   // e.g. "s77ffy.github.io" — empty means no lock
-const HOME_URL  = "";   // e.g. "https://s77ffy.github.io/Brag/"
+const VERSION="0.2.0";
+const BUILD="HO·Ben Stiff @ Room46.uk·0.2.0·2026-11-22·bg7d2f";
+const LOCK_HOST="";   // e.g. "s77ffy.github.io" — empty means no lock
+const HOME_URL ="";   // e.g. "https://s77ffy.github.io/Brag/"
 (function lock(){
   if(!LOCK_HOST) return;
   const h=location.hostname;
-  if(location.protocol==="file:" || h==="localhost" || h==="127.0.0.1" || h===LOCK_HOST) return;
-  document.body.innerHTML='<section class="screen on" style="align-items:center;justify-content:center;'
-    +'text-align:center;padding:32px;gap:16px"><h1 style="font-weight:400">Unofficial copy</h1>'
-    +'<p style="color:#7d9086">Play the real one at '
-    +(HOME_URL?'<a href="'+HOME_URL+'" style="color:#c9a227">'+HOME_URL+'</a>':'Room46.uk')
-    +'</p></section>';
+  if(location.protocol==="file:"||h==="localhost"||h==="127.0.0.1"||h===LOCK_HOST) return;
+  document.body.innerHTML='<section class="screen on" style="align-items:center;justify-content:center;text-align:center;padding:32px;gap:16px"><h1 style="font-weight:400">Unofficial copy</h1><p style="color:#8fa3c8">Play the real one at '+(HOME_URL?'<a href="'+HOME_URL+'" style="color:#22d3ee">'+HOME_URL+'</a>':'Room46.uk')+'</p></section>';
   throw new Error("host lock");
 })();
-const SUITS = ["\u2660","\u2665","\u2666","\u2663"];
-const RANKS = ["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
-const $ = s => document.querySelector(s);
-const el = (t,c) => { const e=document.createElement(t); if(c) e.className=c; return e; };
-const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 
-/* ===================== deck ===================== */
+const $=s=>document.querySelector(s);
+const el=(t,c)=>{const e=document.createElement(t); if(c)e.className=c; return e;};
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const SUIT=["♠","♥","♦","♣"];
+const RANK=["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
+const cardRank=c=>RANK[c%13], cardSuit=c=>SUIT[(c/13)|0];
+const cardRed=c=>{const s=(c/13)|0; return s===1||s===2;};
+
+/* ===================== card faces (from Noms) ===================== */
+const PIPS={
+  2:[[50,22],[50,78,1]],
+  3:[[50,22],[50,50],[50,78,1]],
+  4:[[33,22],[67,22],[33,78,1],[67,78,1]],
+  5:[[33,22],[67,22],[50,50],[33,78,1],[67,78,1]],
+  6:[[33,22],[67,22],[33,50],[67,50],[33,78,1],[67,78,1]],
+  7:[[33,22],[67,22],[50,36],[33,50],[67,50],[33,78,1],[67,78,1]],
+  8:[[33,22],[67,22],[50,36],[33,50],[67,50],[50,64,1],[33,78,1],[67,78,1]],
+  9:[[33,20],[67,20],[33,41],[67,41],[50,50],[33,59,1],[67,59,1],[33,80,1],[67,80,1]],
+  10:[[33,20],[67,20],[50,30],[33,41],[67,41],[33,59,1],[67,59,1],[50,70,1],[33,80,1],[67,80,1]]
+};
+function cardFaceHTML(c){
+  const sym=cardSuit(c), rl=cardRank(c), r=(c%13)+2;   // 2..14
+  let h='<span class="corner"><b>'+rl+'</b><i>'+sym+'</i></span>';
+  if(r===14) h+='<span class="apip'+(((c/13)|0)===0?' asp':'')+'">'+sym+'</span>';
+  else if(r>=11) h+='<span class="court"><span class="cl">'+rl+'</span><span class="cs">'+sym+'</span></span>';
+  else{ const pp=PIPS[r]; for(let i=0;i<pp.length;i++)
+    h+='<span class="pip'+(pp[i][2]?' f':'')+'" style="left:'+pp[i][0]+'%;top:'+pp[i][1]+'%">'+sym+'</span>'; }
+  h+='<span class="corner br"><b>'+rl+'</b><i>'+sym+'</i></span>';
+  return h;
+}
+function faceEl(c,extra){
+  const e=el("div","card"+(cardRed(c)?" red":"")+(extra?" "+extra:""));
+  e.innerHTML=cardFaceHTML(c); e.setAttribute("aria-label",cardRank(c)+" of "+cardSuit(c));
+  return e;
+}
+function backEl(extra){
+  const e=el("div","card back"+(extra?" "+extra:"")); e.setAttribute("aria-hidden","true"); return e;
+}
+
+/* ===================== engine ===================== */
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 function hashStr(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
-function dealHands(seed, round, seatCount){
-  const rnd = mulberry32(hashStr(seed+"#"+round));
+function newHand(seed,round,n,knockRule){
+  const rnd=mulberry32(hashStr(seed+"#"+round));
   const d=[...Array(52).keys()];
   for(let i=51;i>0;i--){const j=Math.floor(rnd()*(i+1));[d[i],d[j]]=[d[j],d[i]];}
-  const out=[]; let k=0;
-  for(let s=0;s<seatCount;s++) out.push([d[k++],d[k++],d[k++]]);
-  return out;
+  const hands=[]; let k=0;
+  for(let s=0;s<n;s++) hands.push([d[k++],d[k++],d[k++]]);
+  return { n, hands, table:[d[k++],d[k++],d[k++]], faceUp:[false,false,true], turn:0,
+           knockedBy:null, toGo:null, knockRule:knockRule||"same", done:false, winners:null };
 }
-const cardRank=c=>RANKS[c%13], cardSuit=c=>SUITS[(c/13)|0], cardRed=c=>((c/13)|0)===1||((c/13)|0)===2;
-
-/* ===================== brag hand ranking ===================== */
-// Standard 3 card brag order. Two quirks that trip people up: a prial of
-// threes beats a prial of aces, and the run A-2-3 beats A-K-Q.
-const CAT=["high card","pair","flush","run","running flush","prial"];
-function rankHand(cards){
-  const r=cards.map(c=>c%13).sort((a,b)=>b-a);        // 0 = two ... 12 = ace
-  const su=cards.map(c=>(c/13)|0);
-  const flush = su[0]===su[1] && su[1]===su[2];
-  const set   = r[0]===r[1] && r[1]===r[2];
-  const a23   = r[0]===12 && r[1]===1 && r[2]===0;     // ace, three, two
-  const run   = a23 || (r[0]===r[1]+1 && r[1]===r[2]+1);
-  let cat, tie;
-  if(set){        cat=5; tie=[r[0]===1 ? 13 : r[0]]; }          // threes on top
-  else if(run && flush){ cat=4; tie=[a23 ? 13 : r[0]]; }
-  else if(run){   cat=3; tie=[a23 ? 13 : r[0]]; }
-  else if(flush){ cat=2; tie=r.slice(); }
-  else if(r[0]===r[1] || r[1]===r[2]){                           // pair
-    const pr = r[1], kick = (r[0]===r[1]) ? r[2] : r[0];
-    cat=1; tie=[pr,kick];
+function legal(G,seat){
+  if(!G||G.done||seat!==G.turn) return {swap:false,knock:false};
+  if(G.knockedBy!==null) return {swap:true,knock:false};
+  return {swap:true,knock:true};
+}
+function applyMove(G,seat,mv){
+  const can=legal(G,seat);
+  if(!can.swap&&!can.knock) return {ok:false,why:"not your go"};
+  const wantsSwap=mv.take!=null&&mv.drop!=null, wantsKnock=!!mv.knock;
+  if(wantsKnock&&!can.knock) return {ok:false,why:"you cannot knock now"};
+  if(G.knockRule==="next"&&wantsKnock&&wantsSwap) return {ok:false,why:"knock instead of swapping, not as well"};
+  if(G.knockRule==="same"&&!wantsSwap) return {ok:false,why:"you must swap on your go"};
+  if(G.knockRule==="next"&&!wantsSwap&&!wantsKnock) return {ok:false,why:"swap or knock"};
+  if(G.knockedBy!==null&&!wantsSwap) return {ok:false,why:"you must swap on your last go"};
+  if(wantsSwap){
+    if(mv.take<0||mv.take>2||mv.drop<0||mv.drop>2) return {ok:false,why:"no such card"};
+    const taken=G.table[mv.take], hand=G.hands[seat].slice();
+    hand.push(taken);
+    const dropped=hand.splice(mv.drop,1)[0];
+    G.hands[seat]=hand; G.table[mv.take]=dropped;
   }
-  else { cat=0; tie=r.slice(); }
-  return {cat, tie, name:handName(cat,tie,r,a23)};
+  if(wantsKnock&&G.knockedBy===null){ G.knockedBy=seat; G.toGo=G.n-1; }
+  if(G.knockedBy!==null&&G.toGo!==null&&seat!==G.knockedBy) G.toGo--;
+  if(G.knockedBy!==null&&G.toGo<=0){ G.done=true; G.turn=null; }
+  else G.turn=(seat+1)%G.n;
+  return {ok:true};
+}
+function rankHand(cards){
+  const r=cards.map(c=>c%13).sort((a,b)=>b-a), su=cards.map(c=>(c/13)|0);
+  const flush=su[0]===su[1]&&su[1]===su[2], set=r[0]===r[1]&&r[1]===r[2];
+  const a23=r[0]===12&&r[1]===1&&r[2]===0;
+  const run=a23||(r[0]===r[1]+1&&r[1]===r[2]+1);
+  let cat,tie;
+  if(set){cat=5;tie=[r[0]===1?13:r[0]];}
+  else if(run&&flush){cat=4;tie=[a23?13:r[0]];}
+  else if(run){cat=3;tie=[a23?13:r[0]];}
+  else if(flush){cat=2;tie=r.slice();}
+  else if(r[0]===r[1]||r[1]===r[2]){const pr=r[1],kick=(r[0]===r[1])?r[2]:r[0];cat=1;tie=[pr,kick];}
+  else{cat=0;tie=r.slice();}
+  return {cat,tie,name:handName(cat,tie,r,a23)};
 }
 function handName(cat,tie,r,a23){
-  const N=["two","three","four","five","six","seven","eight","nine","ten","jack","queen","king","ace"];
   const P=["twos","threes","fours","fives","sixes","sevens","eights","nines","tens","jacks","queens","kings","aces"];
+  const N=["two","three","four","five","six","seven","eight","nine","ten","jack","queen","king","ace"];
+  const SH=["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
   if(cat===5) return "prial of "+P[r[0]];
   if(cat===4||cat===3){
-    const label = a23 ? "ace\u2013three\u2013two" : N[r[0]]+" high";
+    const label=a23?"ace–three–two":N[r[0]]+" high";
     return (cat===4?"running flush, ":"run, ")+label;
   }
-  // spell out every card for the two kinds that are decided on kickers,
-  // so two "jack high" hands never look like a tie when they are not
-  const SH=["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
-  const three = SH[r[0]]+" "+SH[r[1]]+" "+SH[r[2]];
+  const three=SH[r[0]]+" "+SH[r[1]]+" "+SH[r[2]];
   if(cat===2) return three+" flush";
   if(cat===1) return "pair of "+P[tie[0]]+", "+SH[tie[1]]+" with it";
   return three+" high";
@@ -295,488 +372,510 @@ function handName(cat,tie,r,a23){
 function compareHands(a,b){
   if(a.cat!==b.cat) return b.cat-a.cat;
   for(let i=0;i<Math.max(a.tie.length,b.tie.length);i++){
-    const x=a.tie[i]||0, y=b.tie[i]||0;
-    if(x!==y) return y-x;
+    const x=a.tie[i]||0,y=b.tie[i]||0; if(x!==y) return y-x;
   }
   return 0;
 }
-// seats: [{i, cards}] -> ranked best first, with ties sharing a place
 function showdown(entries){
-  const ranked = entries.map(e=>({...e, hand:rankHand(e.cards)}));
+  const ranked=entries.map(e=>({...e,hand:rankHand(e.cards)}));
   ranked.sort((x,y)=>compareHands(x.hand,y.hand));
   let place=1;
-  ranked.forEach((e,i)=>{
-    if(i>0 && compareHands(ranked[i-1].hand,e.hand)!==0) place=i+1;
-    e.place=place;
-  });
+  ranked.forEach((e,i)=>{ if(i>0&&compareHands(ranked[i-1].hand,e.hand)!==0) place=i+1; e.place=place; });
   return ranked;
 }
 
-/* ===================== per-seat keystream ===================== */
-async function keystream(key, round, seat, n){
-  const msg = new TextEncoder().encode(key+"|"+round+"|"+seat);
-  const h = new Uint8Array(await crypto.subtle.digest("SHA-256", msg));
-  return h.slice(0,n);
+/* ===================== compact SDP ===================== */
+function packSDP(sdp){
+  const get=re=>(sdp.match(re)||[])[1]||"";
+  const setup=get(/a=setup:(\S+)/);
+  const cands=[...sdp.matchAll(/a=candidate:\S+ \d+ (udp|UDP) \d+ (\S+) (\d+) typ (\w+)/g)]
+    .filter(m=>m[4]==="host"||m[4]==="srflx")
+    .map(m=>`${m[2]}:${m[3]}${m[4]==="srflx"?"!s":""}`);
+  return [ get(/a=ice-ufrag:(\S+)/), get(/a=ice-pwd:(\S+)/),
+           get(/a=fingerprint:sha-256 (\S+)/).replace(/:/g,""),
+           {actpass:"A",active:"a",passive:"p"}[setup]||"A",
+           [...new Set(cands)].join(",") ].join("~");
+}
+function unpackSDP(packed,type){
+  const [ufrag,pwd,fp,code,cands]=packed.split("~");
+  const setup={A:"actpass",a:"active",p:"passive"}[code]||"actpass";
+  const fpc=(fp.match(/../g)||[]).join(":").toUpperCase();
+  const L=["v=0","o=- 1 2 IN IP4 127.0.0.1","s=-","t=0 0","a=group:BUNDLE 0",
+    "a=msid-semantic: WMS","m=application 9 UDP/DTLS/SCTP webrtc-datachannel","c=IN IP4 0.0.0.0",
+    "a=ice-ufrag:"+ufrag,"a=ice-pwd:"+pwd,"a=ice-options:trickle",
+    "a=fingerprint:sha-256 "+fpc,"a=setup:"+setup,"a=mid:0","a=sctp-port:5000","a=max-message-size:262144"];
+  let n=1;
+  for(const c of (cands||"").split(",").filter(Boolean)){
+    const sr=c.endsWith("!s"), body=sr?c.slice(0,-2):c;
+    const i=body.lastIndexOf(":"), ip=body.slice(0,i), port=body.slice(i+1);
+    L.push(`a=candidate:${n++} 1 udp ${sr?1677729535:2113937151} ${ip} ${port} typ ${sr?"srflx raddr 0.0.0.0 rport 0":"host"} generation 0`);
+  }
+  return {type, sdp:L.join("\r\n")+"\r\n"};
+}
+const ICE=[{urls:"stun:stun.l.google.com:19302"}];
+function gathered(pc){
+  return new Promise(r=>{
+    if(pc.iceGatheringState==="complete") return r();
+    const t=setTimeout(r,2500);
+    pc.addEventListener("icegatheringstatechange",()=>{
+      if(pc.iceGatheringState==="complete"){clearTimeout(t);r();}
+    });
+  });
 }
 
-/* ===================== audio modem ===================== */
-const SYNC_A=900, SYNC_B=3400, F0=1200, DF=130;
-const TONE=80, GAP=25, SYM=TONE+GAP, READ_A=50, READ_B=80;
-const symFreq = i => F0 + i*DF;
-function crc8(bytes){let c=0;for(const b of bytes){c^=b;for(let i=0;i<8;i++)c=(c&0x80)?((c<<1)^0x07)&0xff:(c<<1)&0xff;}return c;}
-
-let AC=null;
-function audio(){ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==="suspended") AC.resume(); return AC; }
-
-function beep(ctx,freq,at,ms,vol){
-  const o=ctx.createOscillator(), g=ctx.createGain();
-  o.type="sine"; o.frequency.value=freq;
-  const a=at, b=at+ms/1000;
-  g.gain.setValueAtTime(0,a);
-  g.gain.linearRampToValueAtTime(vol,a+0.006);
-  g.gain.setValueAtTime(vol,b-0.006);
-  g.gain.linearRampToValueAtTime(0,b);
-  o.connect(g).connect(ctx.destination); o.start(a); o.stop(b+0.02);
-}
-function transmit(bytes){
-  const ctx=audio();
-  const all=[bytes.length,...bytes]; all.push(crc8(Uint8Array.from(all)));
-  const nib=[]; for(const b of all){ nib.push((b>>4)&15, b&15); }
-  let t=ctx.currentTime+0.12;
-  beep(ctx,SYNC_A,t,120,0.30); t+=0.120;
-  beep(ctx,SYNC_B,t,120,0.30); t+=0.120+0.060;
-  for(const n of nib){ beep(ctx,symFreq(n),t,TONE,0.32); t+=SYM/1000; }
-  return (t-ctx.currentTime)*1000;
-}
-
-function Receiver(onFrame,onTick){
-  let an=null, buf=null, timer=null, state="sync", tA=0, tB=0, t0=0, k=0, nib=[], need=0, samples=[];
-  const self={ ok:0, bad:0, last:"", peak:0, db:0, state:"idle", sawA:0, sawB:0, loud:0 };
-  self.start = async () => {
-    const ctx=audio();
-    const st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
-    const src=ctx.createMediaStreamSource(st);
-    an=ctx.createAnalyser(); an.fftSize=2048; an.smoothingTimeConstant=0;
-    src.connect(an); buf=new Float32Array(an.frequencyBinCount);
-    self.state="listening";
-    timer=setInterval(()=>poll(performance.now(), detect()), 5);
-  };
-  self.poll = poll;
-  function detect(){
-    an.getFloatFrequencyData(buf);
-    const bin=AC.sampleRate/an.fftSize;
-    const lo=Math.floor(850/bin), hi=Math.ceil(3450/bin);
-    let best=-1,bv=-Infinity,sum=0,n=0;
-    for(let i=lo;i<=hi;i++){ const v=buf[i]; sum+=v; n++; if(v>bv){bv=v;best=i;} }
-    const floor=sum/n;
-    self.peak=Math.round(best*bin); self.db=Math.round(bv-floor);
-    return (bv-floor>10) ? best*bin : 0;
-  }
-  function nearest(f){
-    if(!f) return -1;
-    let bi=-1,bd=1e9;
-    for(let i=0;i<16;i++){const d=Math.abs(f-symFreq(i)); if(d<bd){bd=d;bi=i;}}
-    return bd<DF/2 ? bi : -1;
-  }
-  function vote(a,b){
-    const tally=new Array(16).fill(0);
-    for(const p of samples) if(p.t>=a&&p.t<=b) tally[p.s]++;
-    let bi=-1,bv=0; for(let i=0;i<16;i++) if(tally[i]>bv){bv=tally[i];bi=i;}
-    return bi;
-  }
-  function poll(now, f){
-    if(onTick) onTick(self);
-    if(state==="sync"){
-      if(f) self.loud=Math.max(self.loud,self.db);
-      if(f && Math.abs(f-SYNC_A)<90){ tA=now; self.sawA++; }
-      else if(f && Math.abs(f-SYNC_B)<110 && tA && now-tA<500){ self.sawB++;
-        tB=now; t0=now+180; k=0; nib=[]; need=2; samples=[]; state="read"; self.state="receiving";
-      }
-      else if(tA && now-tA>500) tA=0;
-      return;
-    }
-    const s=nearest(f);
-    if(s>=0) samples.push({t:now,s});
-    while(k<need && now > t0 + k*SYM + TONE + 12){
-      let bi=vote(t0+k*SYM+READ_A, t0+k*SYM+READ_B);
-      if(bi<0) bi=vote(t0+k*SYM, t0+k*SYM+SYM);   // mic missed the centre
-      nib.push(bi); k++;
-      if(k===2){ const len=(nib[0]<<4|nib[1]); if(nib[0]<0||nib[1]<0||len<1||len>40){ fail(); return; } need=2+len*2+2; }
-    }
-    if(k>=need && need>2){ finish(); return; }
-    if(now>t0+need*SYM+900) fail();
-  }
-  function finish(){
-    if(nib.some(x=>x<0)) return fail();
-    const bytes=[]; for(let i=0;i<nib.length;i+=2) bytes.push(nib[i]<<4|nib[i+1]);
-    const body=bytes.slice(0,bytes.length-1), got=bytes[bytes.length-1];
-    self.last=body.map(b=>b.toString(16).padStart(2,"0")).join(" ");
-    if(crc8(Uint8Array.from(body))===got){ self.ok++; onFrame(body.slice(1)); }
-    else self.bad++;
-    reset();
-  }
-  function fail(){ self.bad++; reset(); }
-  function reset(){ state="sync"; tA=0; samples=[]; nib=[]; k=0; need=0; self.state="listening"; }
-  return self;
-}
-
-/* ===================== state ===================== */
-const store = {
+/* ===================== storage ===================== */
+const store={
   get host(){ try{return JSON.parse(localStorage.getItem("brag.host")||"null");}catch(e){return null;} },
-  set host(v){ localStorage.setItem("brag.host", JSON.stringify(v)); },
+  set host(v){ try{localStorage.setItem("brag.host",JSON.stringify(v));}catch(e){} },
   get me(){ try{return JSON.parse(localStorage.getItem("brag.me")||"null");}catch(e){return null;} },
-  set me(v){ localStorage.setItem("brag.me", JSON.stringify(v)); }
+  set me(v){ try{localStorage.setItem("brag.me",JSON.stringify(v));}catch(e){} }
 };
 function hashParams(){
-  const p={}; const h=location.hash.replace(/^#/,"");
-  if(!h) return null;
-  for(const kv of h.split("&")){ const [a,b]=kv.split("="); if(a) p[a]=decodeURIComponent(b||""); }
-  return p.k||p.seed ? p : null;
+  const h=location.hash.replace(/^#/,""); if(!h) return null;
+  const p={}; for(const kv of h.split("&")){const i=kv.indexOf("="); if(i>0) p[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1));}
+  return p;
 }
-function randKey(){ const a=new Uint8Array(12); crypto.getRandomValues(a); return [...a].map(b=>b.toString(16).padStart(2,"0")).join(""); }
+let dbgOn=false;
+function toggleDbg(){ dbgOn=!dbgOn; $("#dbg").classList.toggle("on",dbgOn); drawDbg(); }
+$("#stamp").addEventListener("click",toggleDbg);
+function drawDbg(lines){ if(dbgOn&&lines) $("#dbg").innerHTML=lines.join("<br>"); }
 
-/* ===================== debug panel ===================== */
-let dbgOn=false, dbgAt=0;
-function toggleDbg(){ dbgOn=!dbgOn; $("#dbg").classList.toggle("on",dbgOn); }
-$("#stamp").addEventListener("click", toggleDbg);
-$("#hCredit").addEventListener("click", toggleDbg);
-function drawDbg(lines, level){
-  if(!dbgOn) return;
-  const t=performance.now(); if(t-dbgAt<120) return; dbgAt=t;
-  $("#dbg").innerHTML = lines.map(l=>l).join("<br>") + (level!=null?`<div class="bar"><i style="width:${clamp(level*3,0,100)}%"></i></div>`:"");
-}
+/* ===================== host ===================== */
+const H={ seats:[], round:0, seed:null, G:null, knockRule:"same", ranked:null };
+const LINKS={};                       // seat -> {pc, dc, state}
 
-/* ===================== HOST ===================== */
-const H = {
-  mode:"audio", round:0, seed:randKey().slice(0,8), seats:[], hands:[], shown:false, txUntil:0
-};
 function hostBoot(){
   const saved=store.host;
-  if(saved){ Object.assign(H, saved); }
-  else { H.seats=[{n:"Seat 1",k:randKey()}]; saveHost(); }
-  $("#gate").classList.remove("on"); $("#host").classList.add("on");
+  if(saved){ H.seats=saved.seats||[]; H.round=saved.round||0; H.seed=saved.seed; H.knockRule=saved.knockRule||"same"; }
+  if(!H.seed) H.seed=rnd12().slice(0,8);
+  if(!H.seats.length) H.seats=[{n:"Seat 1"}];
+  H.seats.forEach(s=>{ s.sent=false; });   // connections never survive a reload
   document.body.classList.add("hostview");
-  $("#hostCredit").textContent="\u00a9 2026 Ben Stiff @ Room46.uk \u00b7 v"+VERSION;
+  $("#hostCredit").textContent="© 2026 Ben Stiff @ Room46.uk · v"+VERSION;
   $("#hostCredit").onclick=toggleDbg;
-  renderSeats(); renderTip();
-  $("#roundLbl").onclick = () => {
-    H.mode = H.mode==="audio" ? "seed" : "audio";
-    H.hands=[]; H.shown=false; saveHost(); renderSeats(); renderTip();
+  $("#gate").classList.remove("on"); $("#host").classList.add("on");
+  $("#gateCredit").classList.remove("on");
+  $("#roundLbl").onclick=()=>{
+    H.knockRule = H.knockRule==="same" ? "next" : "same";
+    saveHost(); render();
+    pushAll();
   };
+  listenForReplies();
+  render();
 }
-function saveHost(){ store.host={mode:H.mode,round:H.round,seed:H.seed,seats:H.seats}; }
-$("#addSeat").textContent="Invite a player";
-function renderSeats(){
+function rnd12(){ const a=new Uint8Array(8); crypto.getRandomValues(a); return [...a].map(b=>b.toString(16).padStart(2,"0")).join(""); }
+function saveHost(){ store.host={seats:H.seats.map(s=>({n:s.n})),round:H.round,seed:H.seed,knockRule:H.knockRule}; }
+
+/* --- pairing --- */
+async function inviteSeat(i){
+  const seat=H.seats[i];
+  if(LINKS[i]&&LINKS[i].pc){ try{LINKS[i].pc.close();}catch(e){} }
+  const pc=new RTCPeerConnection({iceServers:ICE});
+  const dc=pc.createDataChannel("brag",{ordered:true});
+  LINKS[i]={pc,dc,state:"offering"};
+  dc.onopen=()=>{ LINKS[i].state="open"; render(); push(i); };
+  dc.onclose=()=>{ LINKS[i].state="closed"; render(); };
+  dc.onmessage=e=>onPlayerMsg(i,e.data);
+  pc.onconnectionstatechange=()=>{
+    const st=pc.connectionState;
+    if(st==="failed"||st==="disconnected"){ LINKS[i].state=st; render(); }
+  };
+  await pc.setLocalDescription(await pc.createOffer());
+  await gathered(pc);
+  const packed=packSDP(pc.localDescription.sdp);
+  const base=location.href.split("#")[0];
+  const url=`${base}#s=${i}&n=${encodeURIComponent(seat.n)}&o=${encodeURIComponent(packed)}`;
+  seat.sent=true; LINKS[i].state="waiting"; render();
+  try{
+    if(navigator.share) await navigator.share({title:"Brag – "+seat.n,url});
+    else prompt("AirDrop or send this link to the player:",url);
+  }catch(e){}
+}
+async function takeAnswer(i,packed){
+  const L=LINKS[i];
+  if(!L||!L.pc) return;
+  // the reply reaches us by broadcast AND by storage; claim it once, before
+  // the await, or the loser of the race reports a failure over a good link
+  if(L.claimed===packed) return;
+  if(L.claimed) return;
+  if(L.pc.signalingState!=="have-local-offer") return;
+  L.claimed=packed;
+  try{ await L.pc.setRemoteDescription(unpackSDP(packed,"answer")); L.state="joining"; render(); }
+  catch(e){ L.claimed=null; L.state="bad reply"; render(); }
+}
+function listenForReplies(){
+  const apply=(seat,sdp)=>takeAnswer(+seat,sdp);
+  try{
+    const ch=new BroadcastChannel("brag46");
+    ch.onmessage=e=>{ if(e.data&&e.data.t==="answer") apply(e.data.seat,e.data.sdp); };
+    H.ch=ch;
+  }catch(e){}
+  addEventListener("storage",e=>{
+    if(e.key==="brag.reply"&&e.newValue){
+      try{const d=JSON.parse(e.newValue); apply(d.seat,d.sdp);}catch(x){}
+    }
+  });
+  setInterval(()=>{                       // belt and braces, in case neither fires
+    let raw=null; try{raw=localStorage.getItem("brag.reply");}catch(e){}
+    if(!raw) return;
+    try{
+      const d=JSON.parse(raw);
+      if(d.at===H.lastReply) return;
+      H.lastReply=d.at;
+      const L=LINKS[+d.seat];
+      if(L&&!L.claimed) apply(d.seat,d.sdp);
+    }catch(e){}
+  },700);
+}
+
+/* --- talking to the phones --- */
+function viewFor(seat){
+  const G=H.G;
+  if(!G) return {t:"state",seat,names:H.seats.map(s=>s.n),waiting:true,knockRule:H.knockRule};
+  return { t:"state", seat, names:H.seats.map(s=>s.n), knockRule:G.knockRule,
+           you:G.hands[seat].slice(), table:G.table.slice(), faceUp:G.faceUp.slice(),
+           turn:G.turn, knockedBy:G.knockedBy, toGo:G.toGo, done:G.done, round:H.round,
+           can:legal(G,seat),
+           show: G.done&&H.ranked ? {hands:G.hands,winners:G.winners,
+                  names:H.ranked.map(r=>({i:r.i,name:r.hand.name}))} : null };
+}
+function push(i){
+  const L=LINKS[i];
+  if(L&&L.dc&&L.dc.readyState==="open"){ try{ L.dc.send(JSON.stringify(viewFor(i))); }catch(e){} }
+}
+function pushAll(){ H.seats.forEach((s,i)=>push(i)); }
+function onPlayerMsg(i,raw){
+  let m; try{ m=JSON.parse(raw); }catch(e){ return; }
+  if(m.t==="move"&&H.G){
+    const r=applyMove(H.G,i,{take:m.take,drop:m.drop,knock:m.knock});
+    if(r.ok){
+      if(H.G.done){ H.ranked=showdown(H.G.hands.map((cards,x)=>({i:x,cards}))); H.G.winners=H.ranked.filter(e=>e.place===1).map(e=>e.i); }
+      render(); pushAll();
+    } else push(i);
+  }
+}
+
+/* --- render --- */
+function render(){
+  const G=H.G;
+  $("#roundLbl").innerHTML="hand "+H.round+" · <u>"+(H.knockRule==="same"?"swap &amp; knock":"knock next go")+"</u>";
+  const bw=$("#boardWrap"); bw.style.display=G?"block":"none";
+  if(G){
+    const b=$("#board"); b.innerHTML="";
+    G.table.forEach((c,k)=>b.appendChild(G.faceUp[k]||G.done ? faceEl(c) : backEl()));
+  }
   const c=$("#seats"); c.innerHTML="";
   H.seats.forEach((s,i)=>{
-    const d=el("div","seat"+(s.sent?"":" waiting"));
-    d.dataset.seat=i;
-    const h=el("h3");
-    h.appendChild(document.createTextNode(s.n));
-    const bg=el("span","badge"+(s.sent?" sent":"")); bg.textContent=s.sent?"invited":"no phone";
+    const L=LINKS[i], open=L&&L.state==="open";
+    const d=el("div","seat"+(open?" live":""));
+    if(G&&!G.done&&G.turn===i) d.classList.add("now");
+    if(G&&G.done&&G.winners&&G.winners.indexOf(i)>=0) d.classList.add("won");
+    const h=el("h3"); h.appendChild(document.createTextNode(s.n));
+    const bg=el("span","badge"+(open?" on":(s.sent?" sent":"")));
+    bg.textContent = open?"connected":(L?(L.state||"waiting"):"no phone");
     h.appendChild(bg);
     if(H.seats.length>1){
-      const x=el("button","drop"); x.textContent="\u00d7"; x.title="Take this seat off the table";
-      x.onclick=()=>dropSeat(i); h.appendChild(x);
+      const x=el("button","drop"); x.textContent="×";
+      x.onclick=()=>{ H.seats.splice(i,1); H.seats.forEach((q,j)=>{ if(/^Seat \d+$/.test(q.n)) q.n="Seat "+(j+1); });
+                      H.G=null; saveHost(); render(); };
+      h.appendChild(x);
     }
     d.appendChild(h);
     const m=el("div","mini");
     for(let j=0;j<3;j++){
-      const card=el("div","mc");
-      const hand=H.hands[i];
-      if(!hand) card.classList.add("empty");
-      else if(!H.shown || s.out) card.classList.add("down");
-      else{ const cc=hand[j]; card.innerHTML=`${cardRank(cc)}<span>${cardSuit(cc)}</span>`; if(cardRed(cc)) card.classList.add("red"); }
-      m.appendChild(card);
+      if(!G) { const e=el("div","card back"); e.style.opacity=".25"; m.appendChild(e); }
+      else if(G.done) m.appendChild(faceEl(G.hands[i][j]));
+      else m.appendChild(backEl());
     }
     d.appendChild(m);
     const hn=el("div","hand-name");
-    if(s.out) hn.textContent="folded";
-    else if(H.shown && H.hands[i]) hn.textContent=rankHand(H.hands[i]).name;
+    if(G&&G.done) hn.textContent=rankHand(G.hands[i]).name;
+    else if(G&&G.knockedBy===i) hn.textContent="knocked";
     d.appendChild(hn);
-    const st=el("div","status");
-    st.textContent = H.mode==="audio" ? "key "+s.k.slice(0,6) : "shuffle "+H.seed;
-    st.title="Send this hand again";
-    st.onclick=(e)=>{ e.stopPropagation(); if(H.mode==="audio"&&H.hands.length){ audio(); sendDeal(); } };
-    d.appendChild(st);
-    m.onclick=()=>{ if(!H.hands.length) return; s.out=!s.out; H.shown=false; saveHost(); renderSeats(); };
-    if(s.out) d.classList.add("out");
-    if(H.shown && H.winners && H.winners.indexOf(i)>=0) d.classList.add("won");
     c.appendChild(d);
   });
-  $("#roundLbl").innerHTML = "hand "+H.round+" \u00b7 <u>"
-    + (H.mode==="audio" ? "audio"+(AC?" "+AC.state:"") : "shared shuffle") + "</u>";
   renderStep();
 }
 function renderStep(){
-  const sent=H.seats.filter(s=>s.sent).length, live=H.seats.filter(s=>!s.out).length;
+  const G=H.G, anyOpen=H.seats.some((s,i)=>LINKS[i]&&LINKS[i].state==="open");
   let n=1,t="",btn="Deal";
-  if(!sent) t="Invite a player. The share sheet opens \u2014 AirDrop the link to each phone and open it there.";
-  else if(!H.hands.length){ n=2; t="Volume up, mute switch off, then Deal. Each phone gets its own three cards."; }
-  else if(!H.shown){ n=3; btn="Show hands";
-    t="Hand "+H.round+" is out. Bet it out at the table, then tap a player to fold them. Show hands when you are down to the last bets."; }
-  else {
+  if(!anyOpen){
+    t="Invite a player. AirDrop the link to their phone, open it there, then AirDrop their reply straight back to this device.";
+  } else if(!G){
+    n=2; t="Everyone connected? Deal. Each phone gets three cards and the table gets three, two down and one up.";
+  } else if(!G.done){
+    n=3; btn="Deal";
+    const who=H.seats[G.turn]?H.seats[G.turn].n:"–";
+    t = G.knockedBy!==null
+      ? H.seats[G.knockedBy].n+" knocked. "+who+" to go, "+G.toGo+" more "+(G.toGo===1?"swap":"swaps")+" before the show."
+      : who+" to go. They take one from the table and put one back in its place.";
+  } else {
     n=4; btn="Deal";
-    const w=(H.winners||[]).map(i=>H.seats[i].n);
-    t = w.length ? (w.length>1 ? w.join(" and ")+" split it with "+rankHand(H.hands[H.winners[0]]).name+"."
-                               : w[0]+" wins with "+rankHand(H.hands[H.winners[0]]).name+".")
-                 : "Everyone folded.";
-    t += " Deal for the next hand.";
+    const w=(G.winners||[]).map(i=>H.seats[i].n);
+    t = (w.length>1 ? w.join(" and ")+" split it with "+rankHand(G.hands[G.winners[0]]).name+"."
+                    : w[0]+" wins with "+rankHand(G.hands[G.winners[0]]).name+".")+" Deal for the next hand.";
   }
   $("#stepNo").textContent=n; $("#stepTxt").textContent=t;
   $("#deal").textContent=btn;
-  renderTip();
-}
-function dropSeat(i){
-  H.seats.splice(i,1);
-  H.seats.forEach((s,j)=>{ if(/^Seat \d+$/.test(s.n)) s.n="Seat "+(j+1); });
-  H.hands=[]; saveHost(); renderSeats();
-}
-function flash(sel,txt,ms){ const b=$(sel), o=b.textContent; b.textContent=txt; b.classList.add("tx"); setTimeout(()=>{b.textContent=o;b.classList.remove("tx");},ms); }
-function renderTip(){
-  $("#hostTip").innerHTML = H.mode==="audio"
-    ? "Each hand goes out as a chirp from this device; only the phone holding the matching key can read its own cards. Tap a key line to send that hand again. Tap <u>audio</u> above to switch transport."
-    : "No signal is sent \u2014 every phone works out its own cards from the shared shuffle, so anyone technical could work out yours too. Tap <u>shared shuffle</u> above to go back to audio.";
-}
-$("#addSeat").onclick = async () => {
-  audio();
-  let i = H.seats.findIndex(s=>!s.sent);          // fill an empty seat first
-  if(i<0){ H.seats.push({n:"Seat "+(H.seats.length+1), k:randKey()}); i=H.seats.length-1; }
-  const seat=H.seats[i];
-  const base = location.href.split("#")[0];
-  const url = `${base}#s=${i}&k=${seat.k}&seed=${H.seed}&m=${H.mode}&n=${encodeURIComponent(seat.n)}`;
-  let ok=true;
-  try{
-    if(navigator.share) await navigator.share({title:"Brag \u2013 "+seat.n, url});
-    else ok = !!prompt("AirDrop or send this link to the player:", url);
-  }catch(e){ ok=false; }                            // share sheet cancelled
-  if(ok){ seat.sent=true; H.hands=[]; H.shown=false; }
-  saveHost(); renderSeats();
-};
-$("#deal").onclick = async () => {
-  audio();                       // must happen inside the tap, before any await
-  if(H.hands.length && !H.shown){ reveal(); return; }
-  H.round++; H.shown=false; H.winners=null;
-  H.seats.forEach(s=>s.out=false);
-  H.hands = dealHands(H.seed, H.round, H.seats.length);
-  saveHost(); renderSeats();
-  if(H.mode==="audio") await sendDeal();
-};
-function reveal(){
-  const live = H.seats.map((s,i)=>({i,cards:H.hands[i]})).filter(e=>!H.seats[e.i].out);
-  if(!live.length) return;
-  const ranked = showdown(live);
-  H.winners = ranked.filter(e=>e.place===1).map(e=>e.i);
-  H.shown = true; saveHost(); renderSeats();
-}
-document.addEventListener("visibilitychange", ()=>{ if(!document.hidden && AC) AC.resume(); });
-
-async function sendDeal(){
-  const r=H.round & 0xff;
-  const body=[r, H.seats.length];
-  for(let s=0;s<H.seats.length;s++){
-    const ks=await keystream(H.seats[s].k, r, s, 3);
-    for(let j=0;j<3;j++) body.push(H.hands[s][j] ^ ks[j]);
-  }
-  const ms=transmit(body);
-  setTimeout(()=>transmit(body), ms+260);          // second pass: a missed chirp is rare
-  const b=$("#deal"); b.classList.add("tx");
-  const was=b.textContent; b.textContent="Sending\u2026";
-  setTimeout(()=>{ b.classList.remove("tx"); renderStep(); }, ms*2+420);
+  $("#deal").disabled=!anyOpen;
+  $("#hostTip").innerHTML = H.knockRule==="same"
+    ? "House rule: a player swaps and may knock on the same go. Tap <u>swap &amp; knock</u> above to switch to knocking on your next go instead."
+    : "House rule: a player either swaps or knocks, so knocking costs you a go. Tap <u>knock next go</u> above to switch back.";
 }
 
-/* ===================== HAND ===================== */
-const P = { seat:0, key:"", seed:"", mode:"audio", name:"Seat 1", round:0, cards:[], up:false, rx:null };
+$("#addSeat").onclick=async()=>{
+  let i=H.seats.findIndex((s,k)=>!LINKS[k]);
+  if(i<0){ H.seats.push({n:"Seat "+(H.seats.length+1)}); i=H.seats.length-1; }
+  saveHost(); render();
+  await inviteSeat(i);
+};
+$("#deal").onclick=()=>{
+  H.round++;
+  H.G=newHand(H.seed,H.round,H.seats.length,H.knockRule);
+  H.ranked=null;
+  saveHost(); render(); pushAll();
+};
+
+/* ===================== hand (a player's phone) ===================== */
+const P={ seat:0, name:"Seat 1", S:null, taken:null, pc:null, dc:null, net:"offline" };
 let slots=[];
 
 function handBoot(cfg){
-  Object.assign(P,cfg); store.me={seat:P.seat,key:P.key,seed:P.seed,mode:P.mode,name:P.name};
-  $("#gate").classList.remove("on"); $("#hand").classList.add("on");
+  Object.assign(P,cfg);
   document.body.classList.add("handview");
-  $("#whoLbl").textContent=P.name;
-  $("#hCredit").textContent="\u00a9 2026 Ben Stiff @ Room46.uk \u00b7 v"+VERSION;
-  P.hasKey = !!P.key;
-  buildSlots();
-  addEventListener("resize",()=>{ sizeCards(); layout(false); });
-  if(P.hasKey){
-    P.rx = Receiver(onFrame, tick);
-    P.rx.start()
-      .then(()=>setState("listening"))
-      .catch(()=>setState("mic blocked \u2014 allow it for this page in Safari"));
-  }
-  if(P.mode==="seed" || !P.hasKey) localDeal();
-  requestWakeLock();
-  // swipe down anywhere to gather the hand back up
-  let sy=0;
-  $("#hand").addEventListener("pointerdown", e=>{ sy=e.clientY; });
-  $("#hand").addEventListener("pointerup", e=>{
-    if(e.clientY-sy>110 && P.cards.length) layout(true);
-    else if(sy-e.clientY>110 && P.mode==="seed"){ P.round++; localDeal(); }
-  });
+  $("#hCredit").textContent="© 2026 Ben Stiff @ Room46.uk · v"+VERSION;
+  $("#hCredit").onclick=toggleDbg;
+  $("#gate").classList.remove("on"); $("#hand").classList.add("on");
+  $("#gateCredit").classList.remove("on");
+  addEventListener("resize",()=>{ sizeCards(); layout(); });
+  try{ navigator.wakeLock && navigator.wakeLock.request("screen").catch(()=>{}); }catch(e){}
+  drawHand();
 }
-function setState(t){ $("#handState").textContent=t; }
-let tickAt=0;
-function tick(r){
-  drawDbg([`<b>rx</b> ${r.state}`, `peak ${r.peak} Hz`, `snr ${r.db} dB`,
-           `loudest ${r.loud} dB`, `chime ${r.sawA}/${r.sawB}`,
-           `ok ${r.ok} / bad ${r.bad}`, `last ${r.last||"\u2013"}`], r.db);
-  const now=performance.now();
-  if(P.cards.length || now-tickAt<250) return;
-  tickAt=now;
-  setState(r.db>10 ? `hearing ${r.peak} Hz \u00b7 ${r.db} dB` : "listening");
+async function joinTable(packedOffer){
+  const pc=new RTCPeerConnection({iceServers:ICE});
+  P.pc=pc; P.net="connecting";
+  pc.ondatachannel=e=>{
+    P.dc=e.channel;
+    e.channel.onopen=()=>{ P.net="open"; drawHand(); };
+    e.channel.onclose=()=>{ P.net="closed"; drawHand(); };
+    e.channel.onmessage=ev=>{
+      let m; try{ m=JSON.parse(ev.data); }catch(x){ return; }
+      if(m.t==="state"){ P.S=m; P.taken=null; P.knockWith=false; P.name=m.names[m.seat]||P.name; drawHand(); }
+    };
+  };
+  pc.onconnectionstatechange=()=>{
+    if(pc.connectionState==="failed"){ P.net="failed"; drawHand(); }
+  };
+  await pc.setRemoteDescription(unpackSDP(packedOffer,"offer"));
+  await pc.setLocalDescription(await pc.createAnswer());
+  await gathered(pc);
+  return packSDP(pc.localDescription.sdp);
 }
-async function localDeal(){
-  P.cards = dealHands(P.seed, P.round, Math.max(P.seat+1,2))[P.seat];
-  P.up=false; buildSlots(); setState("hand "+P.round+" \u2013 swipe up for the next");
-}
-async function onFrame(body){
-  const round=body[0], n=body[1];
-  if(n===0){ setState("test signal received \u2013 audio is working"); return; }
-  if(P.seat>=n) return;
-  const ks=await keystream(P.key, round, P.seat, 3);
-  const c=[]; for(let j=0;j<3;j++) c.push(body[2+P.seat*3+j] ^ ks[j]);
-  if(c.some(x=>x>51)) { setState("that deal did not decode"); return; }
-  P.round=round; P.cards=c; P.up=false; buildSlots(); setState("hand "+round);
-}
-function requestWakeLock(){ try{ navigator.wakeLock && navigator.wakeLock.request("screen").catch(()=>{}); }catch(e){} }
+function send(o){ if(P.dc&&P.dc.readyState==="open"){ try{P.dc.send(JSON.stringify(o));}catch(e){} } }
 
-function buildSlots(){
+/* --- geometry --- */
+let FAN=8, CW=200, SINKPX=40, RAISE=1.15, TW=62;
+const PIVOT=1.40, PAD=0.06, STRIP=56, EDGE=6;
+function sizeCards(){
+  const W=innerWidth, Hh=innerHeight;
+  const n=Math.max(slots.length,1), half=(n-1)/2, spread=STRIP*half;
+  TW=Math.round(Math.min(Math.max(W*0.185,54), 92));
+  document.documentElement.style.setProperty("--tw",TW+"px");
+  const topUsed = 72 + (TW*1.4) + 96;                // turn line + table cards + hint + buttons
+  let cw=(W/2-EDGE-spread)/(0.5-PAD);
+  cw=Math.min(cw, (Hh-topUsed)*0.78, W*0.80);
+  CW=Math.round(cw);
+  document.documentElement.style.setProperty("--cw",CW+"px");
+  SINKPX=Math.round(CW*1.4*0.10);
+  document.documentElement.style.setProperty("--sink",SINKPX+"px");
+  FAN=(n>1)?Math.asin(Math.min(STRIP/(PIVOT*CW*1.4),0.3))*180/Math.PI:0;
+  RAISE=Math.min((W*0.92)/CW,(Hh-topUsed-20)*0.95/(CW*1.4));
+  if(RAISE<1) RAISE=1;
+}
+function baseAngle(i,n){ return (i-(n-1)/2)*FAN; }
+
+/* --- draw --- */
+function drawHand(){
+  const S=P.S;
+  const whose=$("#whose"), row=$("#tablerow"), act=$("#actions"), hint=$("#hint");
+  act.innerHTML=""; row.innerHTML="";
+  if(!S||S.waiting||!S.you){
+    whose.className="whose";
+    whose.textContent = P.net==="open" ? "waiting for the deal" :
+                        P.net==="connecting" ? "connecting…" :
+                        P.net==="failed" ? "could not reach the table" : "not connected";
+    $("#pile").innerHTML=""; slots=[]; hint.textContent=""; return;
+  }
+  const mine = S.turn===S.seat && !S.done;
+  whose.className="whose"+(mine?" you":"");
+  if(S.done){
+    const w=(S.show&&S.show.winners)||[];
+    whose.textContent = w.indexOf(S.seat)>=0 ? "You win it" : (w.length? S.names[w[0]]+" wins it" : "Show");
+  } else if(mine) whose.innerHTML = P.taken==null ? "<b>Your go</b> — take one from the table" : "<b>Your go</b> — put one back";
+  else whose.innerHTML = "<b>"+esc(S.names[S.turn]||"–")+"</b> to go";
+
+  S.table.forEach((c,k)=>{
+    const t=el("div","tslot");
+    const faceUp = S.faceUp[k]||S.done;
+    t.appendChild(faceUp?faceEl(c):backEl());
+    if(mine && P.taken==null && S.can && S.can.swap){
+      t.classList.add("pick");
+      t.onclick=()=>{ P.taken=k; drawHand(); };
+    }
+    if(P.taken===k) t.classList.add("gone");
+    row.appendChild(t);
+  });
+
+  if(S.done && S.show){
+    const mineName=(S.show.names||[]).find(x=>x.i===S.seat);
+    hint.textContent=mineName?("You had "+mineName.name):"";
+  } else if(mine && P.taken!=null) hint.textContent = P.knockWith
+      ? "Put one back and you have knocked" : "Tap a card to put it back, or flick it away";
+  else if(mine) hint.textContent = S.knockedBy!==null ? "Last go before the show" : "";
+  else hint.textContent = S.knockedBy!=null ? (S.names[S.knockedBy]+" knocked") : "";
+  positionHint();
+
+  if(mine && S.can && S.can.knock){
+    if(S.knockRule==="next" && P.taken==null){
+      const k=el("button","knock"); k.textContent="Knock \u2014 I'm happy";
+      k.onclick=()=>{ send({t:"move",take:null,drop:null,knock:true}); P.taken=null; };
+      act.appendChild(k);
+    } else if(S.knockRule==="same"){
+      // swap and knock on the same go: arm it, then put a card back
+      const k=el("button","knock"+(P.knockWith?" armed":""));
+      k.textContent = P.knockWith ? "Knocking \u2713" : "Knock with this swap";
+      k.onclick=()=>{ P.knockWith=!P.knockWith; drawHand(); };
+      act.appendChild(k);
+    }
+  }
+  drawSlots();
+}
+function positionHint(){
+  const fanTop = innerHeight + SINKPX - CW*1.4;      // where the held cards begin
+  const barBottom = 72, th = TW*1.4;
+  let top = barBottom + (fanTop - barBottom - th)/2 - 16;
+  top = Math.max(barBottom, Math.min(top, fanTop - th - 96));
+  $("#tablerow").style.top = Math.round(top)+"px";
+  $("#hint").style.top = Math.round(top + th + 14)+"px";
+  $("#actions").style.top = Math.round(top + th + 40)+"px";
+}
+function cardsInHand(){
+  const S=P.S; if(!S||!S.you) return [];
+  return P.taken==null ? S.you.slice() : S.you.concat([S.table[P.taken]]);
+}
+function drawSlots(){
   const pile=$("#pile"); pile.innerHTML=""; slots=[];
-  P.cards.forEach((c,i)=>{
-    const s=el("div","slot"); s.dataset.i=i;
+  const cards=cardsInHand(), S=P.S;
+  const faceUp = true;
+  cards.forEach((c,i)=>{
+    const s=el("div","slot");
     const f=el("div","flipper");
-    const back=el("div","face back");
-    const front=el("div","face front"+(cardRed(c)?" red":""));
-    front.innerHTML=`<div class="r">${cardRank(c)}<span>${cardSuit(c)}</span></div>
-      <div class="mid">${cardSuit(c)}</div>
-      <div class="r b">${cardRank(c)}<span>${cardSuit(c)}</span></div>`;
-    f.appendChild(back); f.appendChild(front); s.appendChild(f); pile.appendChild(s);
-    slots.push({node:s, idx:i, raised:false, played:false, dx:0, dy:0});
-    bind(slots[i]);
+    const back=el("div","face"); back.appendChild(backEl());
+    const front=el("div","face front"); front.appendChild(faceEl(c));
+    f.appendChild(back); f.appendChild(front); s.appendChild(f);
+    if(P.taken!=null && i===cards.length-1) s.classList.add("taken");
+    pile.appendChild(s);
+    const rec={node:s,idx:i,dx:0,dy:0,raised:false};
+    slots.push(rec); bindSlot(rec,c);
   });
   sizeCards();
-  layout(false);
+  slots.forEach(s=>{ s.node.classList.add("up"); place(s,false); });
+  positionHint();
 }
-let LIFT=-70, FAN=8, CH=340, CW=238, RAISE=1.2;
-const RATIO=0.70, PIVOT=1.40, PAD=0.052, STRIP=56, EDGE=6, SINK=0.07;
-// Cards pivot about a point below the screen, so the fan angle alone spreads
-// them: each neighbour's index sits STRIP px along. The binding limit is the
-// leftmost card's index staying on screen, which caps how big a card can be.
-function sizeCards(){
-  const n=Math.max(slots.length,1), W=innerWidth, Hh=innerHeight, half=(n-1)/2;
-  const spread=STRIP*half;
-  // 0.5*RATIO*ch + spread - PAD*ch <= W/2 - EDGE
-  let ch=(W/2 - EDGE - spread)/(0.5*RATIO - PAD);
-  ch=Math.min(ch, Hh*0.58, W*1.6);
-  CH=Math.round(ch); CW=Math.round(CH*RATIO);
-  FAN=(n>1 ? Math.asin(Math.min(STRIP/(PIVOT*CH),0.3))*180/Math.PI : 0);
-  document.documentElement.style.setProperty("--ch", CH+"px");
-  document.documentElement.style.setProperty("--cw", CW+"px");
-  document.documentElement.style.setProperty("--sink", Math.round(CH*SINK)+"px");
-  LIFT  = -Math.round(CH*0.08);
-  RAISE = Math.min((W*0.94)/CW, (Hh*0.86)/CH);
-}
-function baseAngle(i,n){ return (i-(n-1)/2) * FAN; }
-function place(s, anim){
-  const n=slots.length, a=baseAngle(s.idx,n);
-  s.node.style.transition = anim ? "" : "none";
+function place(s,anim){
+  const n=slots.length,a=baseAngle(s.idx,n);
+  s.node.style.transition=anim?"":"none";
   if(s.raised){
-    // pulled out of the fan to look at: straighten, centre and fill the screen
-    // the slot's own centre sits below the screen; lift it to the middle
-    const centreY = innerHeight + CH*SINK - CH/2;
-    const up = centreY - innerHeight/2;
-    s.node.style.transformOrigin = "50% 50%";
-    s.node.style.transform = `translate(${s.dx}px,${s.dy - up}px) rotate(0deg) scale(${RAISE})`;
+    const centreY=innerHeight+SINKPX-(CW*1.4)/2;
+    const up=centreY-innerHeight*0.60;
+    s.node.style.transformOrigin="50% 50%";
+    s.node.style.transform=`translate(${s.dx}px,${s.dy-up}px) rotate(0deg) scale(${RAISE})`;
   }else{
-    s.node.style.transformOrigin = `50% ${PIVOT*100}%`;
-    s.node.style.transform = `translate(${s.dx}px,${s.dy}px) rotate(${a}deg)`;
+    s.node.style.transformOrigin="50% 140%";
+    s.node.style.transform=`translate(${s.dx}px,${s.dy}px) rotate(${a}deg)`;
   }
-  s.node.style.zIndex = s.raised ? 50 : 10+s.idx;
-  s.node.classList.toggle("gone", s.played);
+  s.node.style.zIndex=s.raised?50:10+s.idx;
 }
-function layout(reset){
-  slots.forEach(s=>{ if(reset){s.played=false;s.raised=false;s.dx=0;s.dy=0;} place(s,true); });
-  slots.forEach(s=>s.node.classList.toggle("up", P.up));
+function layout(){ slots.forEach(s=>place(s,true)); positionHint(); }
+function dropCard(i){
+  const S=P.S; if(!S||P.taken==null) return;
+  send({t:"move",take:P.taken,drop:i,knock:S.knockRule==="same"&&P.knockWith===true});
+  P.knockWith=false; P.taken=null;
+  slots.forEach(s=>{s.raised=false;});
 }
-function bind(s){
-  let id=null, x0=0, y0=0, moved=0, hist=[];
-  s.node.addEventListener("pointerdown", e=>{
-    if(s.played) return;
+function bindSlot(s,card){
+  let id=null,x0=0,y0=0,moved=0,hist=[];
+  s.node.addEventListener("pointerdown",e=>{
     id=e.pointerId; s.node.setPointerCapture(id);
-    x0=e.clientX; y0=e.clientY; moved=0; hist=[{t:performance.now(),x:e.clientX,y:e.clientY}];
+    x0=e.clientX;y0=e.clientY;moved=0;hist=[{t:performance.now(),x:e.clientX,y:e.clientY}];
     s.node.style.transition="none";
-    e.stopPropagation();
   });
-  s.node.addEventListener("pointermove", e=>{
+  s.node.addEventListener("pointermove",e=>{
     if(e.pointerId!==id) return;
     s.dx=e.clientX-x0; s.dy=e.clientY-y0;
-    moved=Math.max(moved, Math.hypot(s.dx,s.dy));
-    hist.push({t:performance.now(),x:e.clientX,y:e.clientY});
-    if(hist.length>8) hist.shift();
-    s.node.style.zIndex=40;
-    place(s,false);
+    moved=Math.max(moved,Math.hypot(s.dx,s.dy));
+    hist.push({t:performance.now(),x:e.clientX,y:e.clientY}); if(hist.length>8) hist.shift();
+    s.node.style.zIndex=60; place(s,false);
   });
-  s.node.addEventListener("pointerup", e=>{
+  s.node.addEventListener("pointerup",e=>{
     if(e.pointerId!==id) return; id=null;
-    e.stopPropagation();
-    if(!P.up && moved<12){ P.up=true; s.dx=0; s.dy=0; layout(false); return; }   // look at your hand
-    const now=performance.now(), old=hist[0];
-    const dt=Math.max(now-old.t,1);
-    const vy=(e.clientY-old.y)/dt, vx=(e.clientX-old.x)/dt;
-    if(vy < -0.55 || s.dy < -150){ fling(s,vx,vy); return; }
-    if(moved<12){ const r=!s.raised; slots.forEach(o=>{o.raised=false;o.dx=0;o.dy=0;}); s.raised=r; layout(false); return; }
-    s.dx=0; s.dy=0; place(s,true);
+    const now=performance.now(),old=hist[0],dt=Math.max(now-old.t,1);
+    const vy=(e.clientY-old.y)/dt;
+    const canDrop = P.taken!=null;
+    if(canDrop && (vy<-0.55 || s.dy<-150)){ dropCard(s.idx); return; }   // flicked away
+    if(moved<12){
+      if(canDrop && s.raised){ dropCard(s.idx); return; }                 // tap a raised card to drop it
+      const r=!s.raised; slots.forEach(o=>{o.raised=false;o.dx=0;o.dy=0;});
+      s.raised=r; layout(); return;
+    }
+    s.dx=0;s.dy=0;place(s,true);
   });
-  s.node.addEventListener("pointercancel", ()=>{ id=null; s.dx=0; s.dy=0; place(s,true); });
-}
-function fling(s,vx,vy){
-  s.played=true;
-  const n=slots.length, a=s.raised?0:baseAngle(s.idx,n);
-  s.node.style.transition="transform .42s cubic-bezier(.2,.6,.4,1),opacity .42s ease-in";
-  s.node.style.transform=`translate(${s.dx+vx*420}px,${s.dy+vy*420-360}px) rotate(${a+vx*90}deg) scale(.92)`;
-  s.node.classList.add("gone");
-  swish();
-}
-function swish(){
-  try{
-    const ctx=audio(), n=ctx.createBufferSource(), len=ctx.sampleRate*0.16;
-    const b=ctx.createBuffer(1,len,ctx.sampleRate), d=b.getChannelData(0);
-    for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3);
-    n.buffer=b;
-    const f=ctx.createBiquadFilter(); f.type="bandpass"; f.frequency.value=2200; f.Q.value=.9;
-    const g=ctx.createGain(); g.gain.value=.18;
-    n.connect(f).connect(g).connect(ctx.destination); n.start();
-  }catch(e){}
+  s.node.addEventListener("pointercancel",()=>{ id=null;s.dx=0;s.dy=0;place(s,true); });
 }
 
 /* ===================== boot ===================== */
 $("#stamp").textContent="v"+VERSION;
 $("#gateCredit").classList.add("on");
-function leaveGate(){ $("#gateCredit").classList.remove("on"); }
-$("#beHost").onclick = () => { audio(); leaveGate(); hostBoot(); };
-$("#beSolo").onclick = () => {
-  leaveGate(); handBoot({seat:0, key:"", seed:randKey().slice(0,8), mode:"seed", name:"Practice"});
-};
-$("#bePlayer").onclick = () => {
-  const me=store.me;
-  leaveGate();
-  if(me) handBoot({seat:me.seat,key:me.key,seed:me.seed,mode:me.mode,name:me.name});
-  else $("#gateMsg").textContent="No invitation on this phone yet. Ask the dealer to send you one.";
+$("#beHost").onclick=()=>hostBoot();
+$("#bePlayer").onclick=()=>{
+  $("#gateMsg").textContent="Ask the dealer to AirDrop you an invite — that link brings you straight in.";
 };
 (function(){
   const p=hashParams();
-  if(p){
+  if(p&&p.o){                       // an invite: become a hand
+    $("#beHost").style.display="none";
     $("#gateMsg").textContent="You have been dealt in as "+(p.n||"a player")+".";
-    $("#beHost").style.display="none"; $("#beSolo").style.display="none";
-    $("#bePlayer").textContent="Pick up your cards";
-    $("#bePlayer").className="primary";
-    $("#bePlayer").onclick=()=>{ leaveGate(); handBoot({seat:+p.s||0,key:p.k||"",seed:p.seed||"",mode:p.m||"audio",name:p.n||"Seat "+((+p.s||0)+1)}); };
-  } else if(store.me && !store.host){
-    $("#gateMsg").textContent="This phone is already dealt in as "+store.me.name+".";
-    $("#bePlayer").className="primary";
+    const b=$("#bePlayer"); b.textContent="Join the table"; b.className="primary";
+    b.onclick=async()=>{
+      b.disabled=true; b.textContent="Connecting…";
+      let answer;
+      try{ answer=await joinTable(p.o); }
+      catch(e){ $("#gateMsg").textContent="That invite could not be read. Ask for a fresh one."; b.disabled=false; b.textContent="Join the table"; return; }
+      const base=location.href.split("#")[0];
+      const url=`${base}#s=${p.s||0}&a=${encodeURIComponent(answer)}`;
+      $("#gateMsg").textContent="Now AirDrop your reply back to the dealer's device. It opens a tab there — they can close it straight away.";
+      b.disabled=false; b.textContent="Send my reply";
+      b.onclick=async()=>{
+        try{
+          if(navigator.share) await navigator.share({title:"Brag reply – "+(p.n||""),url});
+          else prompt("AirDrop this reply back to the dealer:",url);
+        }catch(e){}
+        handBoot({seat:+(p.s||0),name:p.n||"Seat "+((+(p.s||0))+1)});
+      };
+    };
+  } else if(p&&p.a){                // a reply arriving on the dealer's device
+    $("#gate").classList.remove("on"); $("#relay").classList.add("on");
+    const payload={seat:+(p.s||0),sdp:p.a,at:Date.now()};
+    let posted=false;
+    try{ const ch=new BroadcastChannel("brag46"); ch.postMessage({t:"answer",...payload}); posted=true; }catch(e){}
+    try{ localStorage.setItem("brag.reply",JSON.stringify(payload)); posted=true; }catch(e){}
+    if(!posted){
+      $("#relayH").textContent="Could not pass the reply on";
+      $("#relayP").textContent="Open the game tab on this device and try the invite again.";
+    }
   }
 })();
-document.addEventListener("gesturestart", e=>e.preventDefault());
+document.addEventListener("gesturestart",e=>e.preventDefault());
 </script>
 <script data-goatcounter="https://s77ffy.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
