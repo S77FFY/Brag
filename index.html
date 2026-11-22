@@ -4,14 +4,14 @@
   Copyright (c) 2026 Ben Stiff @ Room46.uk. All rights reserved.
   No copying, redistribution or rehosting without permission.
   Card graphics carried over from the Noms project.
-  HO·Ben Stiff @ Room46.uk·0.2.1·2026-11-22·bg7d2f
+  HO·Ben Stiff @ Room46.uk·0.2.2·2026-11-22·bg7d2f
 -->
-<html lang="en" data-build="HO·Ben Stiff @ Room46.uk·0.2.1·2026-11-22·bg7d2f">
+<html lang="en" data-build="HO·Ben Stiff @ Room46.uk·0.2.2·2026-11-22·bg7d2f">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="app-repo" content="Brag">
-<meta name="app-version" content="0.2.1">
+<meta name="app-version" content="0.2.2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#05070f">
@@ -177,6 +177,12 @@ button[disabled]{opacity:.32}
 
 /* ---------------- handoff / pairing ---------------- */
 #relay{align-items:center;justify-content:center;text-align:center;padding:30px;gap:14px}
+.codebox{display:none;flex-direction:column;gap:10px;align-items:center;width:100%;max-width:34ch}
+.codebox.on{display:flex}
+.code{width:100%;height:92px;background:#070c18;color:var(--gold-hi);border:1px solid var(--line);
+  border-radius:4px;padding:9px;font:11px/1.45 ui-monospace,Menlo,monospace;
+  word-break:break-all;overflow:auto;-webkit-user-select:all;user-select:all;resize:none}
+.codehint{color:var(--bone-dim);font-size:13px;max-width:32ch}
 #relay h2{font-weight:400;margin:0;font-size:26px}
 #relay p{color:var(--bone-dim);max-width:32ch;margin:0}
 .net{font:400 11px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);letter-spacing:.06em}
@@ -204,6 +210,11 @@ body.handview .stamp,body.hostview .stamp{display:none}
   <div class="suits">&#9824;<span class="r">&#9829;</span><span class="r">&#9830;</span>&#9827;</div>
   <p id="gateMsg">Pick this device's job. One deals, the rest are hands.</p>
   <div class="net" id="joinStep" style="min-height:1.2em"></div>
+  <div class="codebox" id="joinBox">
+    <textarea class="code" id="joinCode" readonly></textarea>
+    <button id="joinCopy">Copy my reply</button>
+    <div class="codehint">Send this to the dealer any way you like — message it, or AirDrop the link. They tap <b>Paste a reply</b> on the table.</div>
+  </div>
   <div class="roles">
     <button class="primary" id="beHost">Deal from this device</button>
     <button id="bePlayer">Join as a hand</button>
@@ -230,13 +241,14 @@ body.handview .stamp,body.hostview .stamp{display:none}
   </div>
   <div class="controls">
     <button id="addSeat">Invite a player</button>
+    <button id="pasteReply" style="display:none">Paste a reply</button>
     <button class="primary" id="deal">Deal</button>
   </div>
 </section>
 
 <section id="hand" class="screen">
   <div class="topbar">
-    <div class="hcredit" id="hCredit">&copy; 2026 Ben Stiff @ Room46.uk &middot; v0.2.1</div>
+    <div class="hcredit" id="hCredit">&copy; 2026 Ben Stiff @ Room46.uk &middot; v0.2.2</div>
     <div class="whose" id="whose">waiting for the deal</div>
     <div class="tablerow" id="tablerow"></div>
   </div>
@@ -248,16 +260,21 @@ body.handview .stamp,body.hostview .stamp{display:none}
 <section id="relay" class="screen">
   <h2 id="relayH">Reply received</h2>
   <p id="relayP">You can close this tab and go back to the game.</p>
+  <div class="codebox" id="relayBox">
+    <textarea class="code" id="relayCode" readonly></textarea>
+    <button id="relayCopy">Copy the reply</button>
+    <div class="codehint">Switch to the tab with the table on it and tap <b>Paste a reply</b>.</div>
+  </div>
 </section>
 
-<div class="stamp" id="stamp">v0.2.1</div>
+<div class="stamp" id="stamp">v0.2.2</div>
 <div class="gatecredit" id="gateCredit">&copy; 2026 Ben Stiff @ Room46.uk</div>
 <div id="dbg"></div>
 
 <script>
 "use strict";
-const VERSION="0.2.1";
-const BUILD="HO·Ben Stiff @ Room46.uk·0.2.1·2026-11-22·bg7d2f";
+const VERSION="0.2.2";
+const BUILD="HO·Ben Stiff @ Room46.uk·0.2.2·2026-11-22·bg7d2f";
 const LOCK_HOST="";   // e.g. "s77ffy.github.io" — empty means no lock
 const HOME_URL ="";   // e.g. "https://s77ffy.github.io/Brag/"
 (function lock(){
@@ -702,6 +719,8 @@ function renderStep(){
   $("#stepNo").textContent=n; $("#stepTxt").textContent=t;
   $("#deal").textContent=btn;
   $("#deal").disabled=!anyOpen;
+  const waiting=H.seats.some((s,i)=>!s.local && LINKS[i] && !LINKS[i].claimed);
+  $("#pasteReply").style.display = waiting ? "" : "none";
   const full=H.seats.length>=MAXSEATS;
   $("#addSeat").disabled=full;
   $("#addSeat").textContent = full ? "Table full (10)" : "Invite a player ("+H.seats.length+"/10)";
@@ -719,6 +738,31 @@ $("#addSeat").onclick=async()=>{
   saveHost(); render();
   await inviteSeat(i);
 };
+function parseReply(txt){
+  if(!txt) return null;
+  const t=txt.trim();
+  const m=t.match(/[#&]a=([^&\s]+)/);
+  if(m){
+    const sm=t.match(/[#&]s=(\d+)/);
+    return { sdp:decodeURIComponent(m[1]), seat: sm?+sm[1]:null };
+  }
+  if(t.indexOf("~")>0) return { sdp:t, seat:null };     // a bare code
+  return null;
+}
+async function pasteReply(){
+  let txt="";
+  try{ txt=await navigator.clipboard.readText(); }catch(e){}
+  if(!txt) txt=prompt("Paste the reply from the player's phone:","")||"";
+  const r=parseReply(txt);
+  if(!r){ alert("That did not look like a reply. Copy the whole code from the player's phone."); return; }
+  let seat=r.seat;
+  if(seat==null || !LINKS[seat] || LINKS[seat].claimed){
+    seat=H.seats.findIndex((s,i)=>!s.local && LINKS[i] && !LINKS[i].claimed);
+  }
+  if(seat<0 || !LINKS[seat]){ alert("No seat is waiting for a reply. Press Invite a player first."); return; }
+  await takeAnswer(seat, r.sdp);
+}
+$("#pasteReply").onclick=pasteReply;
 $("#deal").onclick=()=>{
   H.round++; H.taken=null; H.knockWith=false;
   H.G=newHand(H.seed,H.round,H.seats.length,H.knockRule);
@@ -741,12 +785,17 @@ function handBoot(cfg){
   try{ navigator.wakeLock && navigator.wakeLock.request("screen").catch(()=>{}); }catch(e){}
   drawHand();
 }
-async function joinTable(packedOffer){
+async function joinTable(packedOffer, seat, name){
   const pc=new RTCPeerConnection({iceServers:ICE});
   P.pc=pc; P.net="connecting";
   pc.ondatachannel=e=>{
     P.dc=e.channel;
-    e.channel.onopen=()=>{ P.net="open"; drawHand(); };
+    e.channel.onopen=()=>{
+      P.net="open";
+      // the dealer took the reply, however it reached them: deal me in
+      if(!document.body.classList.contains("handview")) handBoot({seat:seat||0,name:name||"Player"});
+      drawHand();
+    };
     e.channel.onclose=()=>{ P.net="closed"; drawHand(); };
     e.channel.onmessage=ev=>{
       let m; try{ m=JSON.parse(ev.data); }catch(x){ return; }
@@ -946,18 +995,29 @@ $("#bePlayer").onclick=()=>{
     b.onclick=async()=>{
       b.disabled=true; b.textContent="Connecting…";
       let answer;
-      try{ answer=await joinTable(p.o); }
-      catch(e){ $("#gateMsg").textContent="That invite could not be read. Ask for a fresh one."; b.disabled=false; b.textContent="Join the table"; return; }
+      try{ answer=await joinTable(p.o, +(p.s||0), p.n||"Player"); }
+      catch(e){
+        $("#gateMsg").textContent = (e&&e.message) ? e.message
+          : "That invite could not be read. Ask the dealer for a fresh one.";
+        step(""); b.disabled=false; b.textContent="Try again"; return;
+      }
       const base=location.href.split("#")[0];
       const url=`${base}#s=${p.s||0}&a=${encodeURIComponent(answer)}`;
-      $("#gateMsg").textContent="Now AirDrop your reply back to the dealer's device. It opens a tab there — they can close it straight away.";
-      b.disabled=false; b.textContent="Send my reply";
+      $("#gateMsg").textContent="Send your reply back to the dealer. You will be dealt in the moment they take it.";
+      $("#joinCode").value=answer;
+      $("#joinBox").classList.add("on");
+      $("#joinCopy").onclick=async()=>{
+        const t=$("#joinCode"); t.select();
+        try{ await navigator.clipboard.writeText(answer); $("#joinCopy").textContent="Copied"; }
+        catch(e){ try{ document.execCommand("copy"); $("#joinCopy").textContent="Copied"; }
+                  catch(x){ $("#joinCopy").textContent="Select it and copy"; } }
+      };
+      b.disabled=false; b.textContent="AirDrop my reply";
       b.onclick=async()=>{
         try{
           if(navigator.share) await navigator.share({title:"Brag reply – "+(p.n||""),url});
-          else prompt("AirDrop this reply back to the dealer:",url);
+          else prompt("Send this reply back to the dealer:",url);
         }catch(e){}
-        handBoot({seat:+(p.s||0),name:p.n||"Seat "+((+(p.s||0))+1)});
       };
     };
   } else if(p&&p.a){                // a reply arriving on the dealer's device
@@ -987,10 +1047,17 @@ $("#bePlayer").onclick=()=>{
     setTimeout(()=>{
       clearInterval(poll);
       if(acked) return;
-      $("#relayH").textContent="The game did not pick this up";
-      $("#relayP").innerHTML="The dealer's table needs to still be open on this device. "
-        +"If it closed, reopen it, press Invite again and send a fresh reply.";
-    },4000);
+      $("#relayH").textContent="Pass this across by hand";
+      $("#relayP").textContent="This page could not reach the table on its own \u2014 that happens when the game is open in a different browser or tab.";
+      $("#relayCode").value=p.a;
+      $("#relayBox").classList.add("on");
+    },3500);
+    $("#relayCopy").onclick=async()=>{
+      const t=$("#relayCode"); t.select();
+      try{ await navigator.clipboard.writeText(p.a); $("#relayCopy").textContent="Copied"; }
+      catch(e){ try{ document.execCommand("copy"); $("#relayCopy").textContent="Copied"; }
+                catch(x){ $("#relayCopy").textContent="Select it and copy"; } }
+    };
   }
 })();
 document.addEventListener("gesturestart",e=>e.preventDefault());
