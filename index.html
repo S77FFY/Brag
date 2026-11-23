@@ -4,14 +4,14 @@
   Copyright (c) 2026 Ben Stiff @ Room46.uk. All rights reserved.
   No copying, redistribution or rehosting without permission.
   Card graphics carried over from the Noms project.
-  HO·Ben Stiff @ Room46.uk·0.2.2·2026-11-22·bg7d2f
+  HO·Ben Stiff @ Room46.uk·0.2.3·2026-11-23·bg7d2f
 -->
-<html lang="en" data-build="HO·Ben Stiff @ Room46.uk·0.2.2·2026-11-22·bg7d2f">
+<html lang="en" data-build="HO·Ben Stiff @ Room46.uk·0.2.3·2026-11-23·bg7d2f">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="app-repo" content="Brag">
-<meta name="app-version" content="0.2.2">
+<meta name="app-version" content="0.2.3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#05070f">
@@ -212,8 +212,8 @@ body.handview .stamp,body.hostview .stamp{display:none}
   <div class="net" id="joinStep" style="min-height:1.2em"></div>
   <div class="codebox" id="joinBox">
     <textarea class="code" id="joinCode" readonly></textarea>
-    <button id="joinCopy">Copy my reply</button>
-    <div class="codehint">Send this to the dealer any way you like — message it, or AirDrop the link. They tap <b>Paste a reply</b> on the table.</div>
+    <button class="primary" id="joinCopy">Copy my reply</button>
+    <div class="codehint">On the dealer's own device, copy is enough — the clipboard follows you across Apple devices. Otherwise message it over. Then they tap <b>Paste a reply</b>.</div>
   </div>
   <div class="roles">
     <button class="primary" id="beHost">Deal from this device</button>
@@ -248,7 +248,7 @@ body.handview .stamp,body.hostview .stamp{display:none}
 
 <section id="hand" class="screen">
   <div class="topbar">
-    <div class="hcredit" id="hCredit">&copy; 2026 Ben Stiff @ Room46.uk &middot; v0.2.2</div>
+    <div class="hcredit" id="hCredit">&copy; 2026 Ben Stiff @ Room46.uk &middot; v0.2.3</div>
     <div class="whose" id="whose">waiting for the deal</div>
     <div class="tablerow" id="tablerow"></div>
   </div>
@@ -267,14 +267,14 @@ body.handview .stamp,body.hostview .stamp{display:none}
   </div>
 </section>
 
-<div class="stamp" id="stamp">v0.2.2</div>
+<div class="stamp" id="stamp">v0.2.3</div>
 <div class="gatecredit" id="gateCredit">&copy; 2026 Ben Stiff @ Room46.uk</div>
 <div id="dbg"></div>
 
 <script>
 "use strict";
-const VERSION="0.2.2";
-const BUILD="HO·Ben Stiff @ Room46.uk·0.2.2·2026-11-22·bg7d2f";
+const VERSION="0.2.3";
+const BUILD="HO·Ben Stiff @ Room46.uk·0.2.3·2026-11-22·bg7d2f";
 const LOCK_HOST="";   // e.g. "s77ffy.github.io" — empty means no lock
 const HOME_URL ="";   // e.g. "https://s77ffy.github.io/Brag/"
 (function lock(){
@@ -698,7 +698,10 @@ function renderStep(){
   const G=H.G, anyOpen=H.seats.some((s,i)=>!s.local&&LINKS[i]&&LINKS[i].state==="open");
   let n=1,t="",btn="Deal";
   if(!anyOpen){
-    t="You are in as "+H.seats[0].n+". Invite a player: AirDrop the link to their phone, open it there, then AirDrop their reply straight back to this device.";
+    const waitingFor=H.seats.find((s,i)=>!s.local&&LINKS[i]&&!LINKS[i].claimed);
+    t = waitingFor
+      ? "Waiting on "+waitingFor.n+". On their phone: tap Join the table, then Copy my reply. Get that code to this device, then tap Paste a reply."
+      : "You are in as "+H.seats[0].n+". Tap Invite a player and send the link to their phone.";
   } else if(!G){
     n=2; t="Everyone connected? Deal. Each phone gets three cards and the table gets three, two down and one up.";
   } else if(!G.done){
@@ -1012,7 +1015,7 @@ $("#bePlayer").onclick=()=>{
         catch(e){ try{ document.execCommand("copy"); $("#joinCopy").textContent="Copied"; }
                   catch(x){ $("#joinCopy").textContent="Select it and copy"; } }
       };
-      b.disabled=false; b.textContent="AirDrop my reply";
+      b.disabled=false; b.className=""; b.textContent="Or AirDrop the link";
       b.onclick=async()=>{
         try{
           if(navigator.share) await navigator.share({title:"Brag reply – "+(p.n||""),url});
