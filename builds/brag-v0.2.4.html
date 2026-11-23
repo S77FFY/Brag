@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<!--
+  Brag — bastard brag across devices, no server
+  Copyright (c) 2026 Ben Stiff @ Room46.uk. All rights reserved.
+  No copying, redistribution or rehosting without permission.
+  Card graphics carried over from the Noms project.
+  HO·Ben Stiff @ Room46.uk·0.2.4·2026-11-23·bg7d2f
+-->
+<html lang="en" data-build="HO·Ben Stiff @ Room46.uk·0.2.4·2026-11-23·bg7d2f">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="app-repo" content="Brag">
+<meta name="app-version" content="0.2.4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#05070f">
+<title>Brag</title>
+<style>
+/* palette carried over from Noms */
+:root{
+  --felt:#05070f; --felt2:#0d1430; --panel:#0c1226;
+  --purple:#a855f7; --purple-dk:#6d28d9;
+  --bone:#e9f2ff; --bone-dim:#8fa3c8; --paper:#f7f1df;
+  --gold:#22d3ee; --gold-hi:#8bf6ff; --gold-dk:#0b7f96;
+  --turn:#f2c96e; --turn-hi:#ffe9a8;
+  --line:rgba(139,246,255,.16);
+  --cw:96px; --tw:62px; --sink:40px;
+  --glow:0 0 24px rgba(34,211,238,.45);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
+body{
+  background:radial-gradient(120% 90% at 50% 0%, var(--felt2) 0%, var(--felt) 60%, #01020a 100%);
+  color:var(--bone);
+  font:16px/1.45 Georgia,"Iowan Old Style","Times New Roman",serif;
+  -webkit-user-select:none;user-select:none;touch-action:none;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+.screen{position:fixed;inset:0;display:none;flex-direction:column}
+.screen.on{display:flex}
+button{
+  font:inherit;color:var(--bone);background:transparent;
+  border:1px solid var(--line);border-radius:3px;padding:.7em 1.1em;cursor:pointer;
+}
+button:active{background:rgba(139,246,255,.09)}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+button.primary{background:var(--gold);border-color:var(--gold);color:#04212a;font-weight:700;box-shadow:var(--glow)}
+button.primary:active{background:var(--gold-dk);color:#dff9ff}
+button.knock{border-color:var(--turn);color:var(--turn);padding:.55em .95em}
+button.knock.armed{background:var(--turn);color:#2a1f05;font-weight:700}
+button[disabled]{opacity:.32}
+.mono{font-family:ui-monospace,Menlo,monospace}
+
+/* ---------------- cards (from Noms) ---------------- */
+.card{
+  position:relative;width:var(--cw);height:calc(var(--cw)*1.4);border-radius:9%;
+  background:#fbf7ec;border:1px solid #cfc2a4;color:#221b26;
+  box-shadow:0 2px 6px rgba(0,0,0,.45);flex:none;user-select:none;
+  font-size:var(--cw);
+}
+.card.red{color:#c0392b}
+.corner{position:absolute;top:4%;left:6%;text-align:center;line-height:1.02}
+.corner b{display:block;font-family:Georgia,serif;font-size:.21em;font-weight:700}
+.corner i{display:block;font-style:normal;font-size:.17em}
+.corner.br{top:auto;left:auto;bottom:4%;right:6%;transform:rotate(180deg)}
+.pip{position:absolute;transform:translate(-50%,-50%);font-size:.22em;line-height:1}
+.pip.f{transform:translate(-50%,-50%) rotate(180deg)}
+.apip{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:.52em;line-height:1}
+.apip.asp{font-size:.66em;text-shadow:0 0 1px #221b26}
+.court{position:absolute;inset:16% 18%;border:2px double currentColor;border-radius:8%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2%}
+.court .cl{font-family:Georgia,serif;font-size:.4em;font-weight:700;line-height:1}
+.court .cs{font-size:.2em;line-height:1}
+.card.back{
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,.28) 0 5.5%, rgba(255,255,255,0) 6.5%),
+    repeating-linear-gradient(45deg, rgba(139,246,255,.20) 0 1.5px, transparent 1.5px 7px),
+    repeating-linear-gradient(-45deg, rgba(139,246,255,.20) 0 1.5px, transparent 1.5px 7px),
+    linear-gradient(155deg,#7b3ff2,#1b2ea8);
+  border:2px solid #cfe9ff;
+}
+.card.back::after{content:'';position:absolute;inset:7%;border:1.5px solid rgba(255,255,255,.55);border-radius:8%}
+.card.slim{border-radius:7%}
+@keyframes dealin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.dealin{animation:dealin .3s ease-out both}
+
+/* ---------------- gate ---------------- */
+#gate{align-items:center;justify-content:center;text-align:center;padding:30px;gap:16px}
+#gate h1{font-size:40px;margin:0;font-weight:400;letter-spacing:.06em;
+  background:linear-gradient(180deg,var(--gold-hi),var(--gold));-webkit-background-clip:text;
+  background-clip:text;color:transparent;text-shadow:none}
+#gate .suits{font-size:19px;letter-spacing:12px;margin-right:-12px;color:var(--gold);opacity:.75}
+#gate .suits .r{color:var(--purple)}
+#gate p{max-width:32ch;color:var(--bone-dim);margin:0;font-size:15px}
+.roles{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+
+/* ---------------- host ---------------- */
+#host{padding:0;overflow:hidden}
+.hosthead{flex:0 0 auto;padding:14px 18px 0}
+.credit{font:400 10px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);opacity:.4;letter-spacing:.08em;margin-bottom:10px}
+.hostbar{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.hostbar h2{margin:0;font-weight:400;font-size:25px;letter-spacing:.03em}
+.round{margin-left:auto;font:400 14px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);cursor:pointer}
+.round u{text-decoration:none;border-bottom:1px dotted var(--line)}
+.step{display:flex;gap:10px;align-items:baseline;margin-top:12px;font-size:15px}
+.step b{color:var(--gold);font-weight:400;font-size:13px;font-family:ui-monospace,Menlo,monospace}
+.rule{height:1px;background:var(--line);margin:12px 0 0}
+.scroller{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 18px 8px;min-height:0}
+.boardlbl{font:400 11px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);letter-spacing:.1em;margin-bottom:9px}
+.board{display:flex;gap:10px;margin-bottom:18px}
+.board .card{--cw:var(--tw)}
+.seats{display:flex;gap:20px;flex-wrap:wrap;align-content:flex-start}
+.seat{width:200px;position:relative;padding-left:12px;border-left:2px solid transparent}
+.seat h3{margin:0 0 9px;font-weight:400;font-size:18px;display:flex;align-items:center;gap:8px}
+.seat h3 .drop{margin-left:auto;border:none;padding:2px 7px;font-size:17px;color:var(--bone-dim);line-height:1}
+.seat .mini{display:flex;gap:5px}
+.seat .mini .card{--cw:46px}
+.seat.live h3{color:var(--gold-hi)}
+.seat.now{border-left-color:var(--turn)}
+.seat.now h3{color:var(--turn)}
+.seat.won h3{color:var(--gold-hi);text-shadow:var(--glow)}
+.badge{font:400 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;border:1px solid var(--line);
+  padding:4px 6px;border-radius:2px;color:var(--bone-dim)}
+.badge.sent{color:var(--purple);border-color:var(--purple-dk)}
+.badge.on{color:var(--gold);border-color:var(--gold-dk)}
+.seatact{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.seatnote{font:400 12px/1.3 Georgia,serif;color:var(--turn);opacity:.85}
+.card.pickable{cursor:pointer;box-shadow:0 0 0 2px var(--turn),0 4px 12px rgba(0,0,0,.5)}
+.card.justtook{box-shadow:0 0 0 2px var(--gold),0 4px 12px rgba(0,0,0,.5)}
+.diag{font:400 11px/1.5 ui-monospace,Menlo,monospace;color:var(--bone-dim);opacity:.85;margin-top:8px}
+.hand-name{font:400 13px/1.5 Georgia,serif;color:var(--bone);margin-top:8px;min-height:1.5em}
+.seat.won .hand-name{color:var(--gold-hi)}
+.tip{color:var(--bone-dim);font-size:13px;max-width:54ch;padding-top:14px}
+.tip u{text-decoration:none;border-bottom:1px dotted var(--line)}
+.controls{flex:0 0 auto;display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+  padding:13px 18px calc(13px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--line);background:rgba(5,7,15,.96)}
+#addSeat{margin-right:auto}
+#deal{min-width:8.5em}
+
+/* ---------------- hand ---------------- */
+#hand{overflow:hidden}
+.topbar{position:absolute;top:0;left:0;right:0;z-index:7;padding:24px 14px 0;text-align:center;pointer-events:none}
+.topbar .tablerow{pointer-events:auto}
+.hcredit{position:absolute;top:7px;left:0;right:0;text-align:center;
+  font:400 9px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);opacity:.3;letter-spacing:.14em}
+.whose{font:400 15px/1.2 Georgia,serif;color:var(--bone-dim);margin-bottom:12px;min-height:1.2em}
+.whose.you{color:var(--turn);text-shadow:0 0 16px rgba(242,201,110,.5)}
+.whose b{font-weight:400;color:var(--turn)}
+.whose.you{font-size:17px}
+.tablerow{position:absolute;left:0;right:0;display:flex;gap:10px;justify-content:center;z-index:6}
+.tslot{position:relative}
+.tslot .card{--cw:var(--tw)}
+.tslot.pick .card{box-shadow:0 0 0 2px var(--turn),0 4px 12px rgba(0,0,0,.5);cursor:pointer}
+.tslot.pick{transform:translateY(-6px);transition:transform .2s}
+.tslot.gone{opacity:.25}
+.pile{position:absolute;inset:0}
+.slot{
+  position:absolute;left:50%;width:var(--cw);height:calc(var(--cw)*1.4);
+  bottom:calc(var(--sink) * -1);margin-left:calc(var(--cw) / -2);
+  transform-origin:50% 140%;perspective:1400px;
+  transition:transform .3s cubic-bezier(.25,.9,.3,1),opacity .3s;
+  will-change:transform;
+}
+.flipper{position:absolute;inset:0;transform-style:preserve-3d;
+  transition:transform .4s cubic-bezier(.3,.8,.3,1)}
+.slot.up .flipper{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.face.front{transform:rotateY(180deg)}
+.slot.taken .card{box-shadow:0 0 0 2px var(--gold),0 6px 18px rgba(0,0,0,.55)}
+.gone{opacity:0;pointer-events:none}
+.actions{position:absolute;left:0;right:0;z-index:7;display:flex;gap:10px;
+  justify-content:center;pointer-events:none}
+.actions button{pointer-events:auto}
+.hint{position:absolute;left:0;right:0;z-index:6;text-align:center;
+  font:400 13px/1.4 Georgia,serif;color:var(--bone-dim);padding:0 20px}
+
+/* ---------------- handoff / pairing ---------------- */
+#relay{align-items:center;justify-content:center;text-align:center;padding:30px;gap:14px}
+.codebox{display:none;flex-direction:column;gap:10px;align-items:center;width:100%;max-width:34ch}
+.codebox.on{display:flex}
+.code{width:100%;height:92px;background:#070c18;color:var(--gold-hi);border:1px solid var(--line);
+  border-radius:4px;padding:9px;font:11px/1.45 ui-monospace,Menlo,monospace;
+  word-break:break-all;overflow:auto;-webkit-user-select:all;user-select:all;resize:none}
+.codehint{color:var(--bone-dim);font-size:13px;max-width:32ch}
+#relay h2{font-weight:400;margin:0;font-size:26px}
+#relay p{color:var(--bone-dim);max-width:32ch;margin:0}
+.net{font:400 11px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);letter-spacing:.06em}
+.net.good{color:var(--gold)}
+.net.bad{color:var(--purple)}
+
+.stamp{position:fixed;right:12px;bottom:8px;z-index:60;
+  font:11px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);opacity:.5;padding:6px}
+body.handview .stamp,body.hostview .stamp{display:none}
+.gatecredit{position:fixed;left:12px;bottom:8px;z-index:60;display:none;
+  font:400 11px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);opacity:.5}
+.gatecredit.on{display:block}
+#dbg{position:fixed;right:8px;bottom:8px;z-index:70;display:none;width:250px;max-height:54vh;
+  overflow:auto;background:rgba(4,8,18,.95);border:1px solid var(--line);border-radius:3px;
+  padding:9px 10px;font:11px/1.5 ui-monospace,Menlo,monospace;color:#9fb5c8}
+#dbg.on{display:block}
+#dbg b{color:var(--gold);font-weight:400}
+@media (prefers-reduced-motion:reduce){.flipper,.slot,.tslot{transition:none}}
+</style>
+</head>
+<body>
+
+<section id="gate" class="screen on">
+  <h1>Brag</h1>
+  <div class="suits">&#9824;<span class="r">&#9829;</span><span class="r">&#9830;</span>&#9827;</div>
+  <p id="gateMsg">Pick this device's job. One deals, the rest are hands.</p>
+  <div class="net" id="joinStep" style="min-height:1.2em"></div>
+  <div class="net" id="joinStep2" style="min-height:1.2em"></div>
+  <div class="codebox" id="joinBox">
+    <textarea class="code" id="joinCode" readonly></textarea>
+    <button class="primary" id="joinCopy">Copy my reply</button>
+    <div class="codehint">On the dealer's own device, copy is enough — the clipboard follows you across Apple devices. Otherwise message it over. Then they tap <b>Paste a reply</b>.</div>
+    <button id="joinReal">Connection trouble? Tap here</button>
+    <button id="joinReport">Copy connection report</button>
+  </div>
+  <div class="roles">
+    <button class="primary" id="beHost">Deal from this device</button>
+    <button id="bePlayer">Join as a hand</button>
+  </div>
+</section>
+
+<section id="host" class="screen">
+  <div class="hosthead">
+    <div class="credit" id="hostCredit">&copy; 2026 Ben Stiff @ Room46.uk</div>
+    <div class="hostbar">
+      <h2>The table</h2>
+      <div class="round" id="roundLbl">hand 0</div>
+    </div>
+    <div class="step"><b id="stepNo">1</b><span id="stepTxt"></span></div>
+    <div class="rule"></div>
+  </div>
+  <div class="scroller">
+    <div id="boardWrap" style="display:none">
+      <div class="boardlbl">ON THE TABLE</div>
+      <div class="board" id="board"></div>
+    </div>
+    <div class="seats" id="seats"></div>
+    <div class="tip" id="hostTip"></div>
+  </div>
+  <div class="controls">
+    <button id="addSeat">Invite a player</button>
+    <button id="pasteReply" style="display:none">Paste a reply</button>
+    <button id="hostReport" style="display:none">Copy connection report</button>
+    <button class="primary" id="deal">Deal</button>
+  </div>
+</section>
+
+<section id="hand" class="screen">
+  <div class="topbar">
+    <div class="hcredit" id="hCredit">&copy; 2026 Ben Stiff @ Room46.uk &middot; v0.2.4</div>
+    <div class="whose" id="whose">waiting for the deal</div>
+    <div class="tablerow" id="tablerow"></div>
+  </div>
+  <div class="hint" id="hint"></div>
+  <div class="pile" id="pile"></div>
+  <div class="actions" id="actions"></div>
+</section>
+
+<section id="relay" class="screen">
+  <h2 id="relayH">Reply received</h2>
+  <p id="relayP">You can close this tab and go back to the game.</p>
+  <div class="codebox" id="relayBox">
+    <textarea class="code" id="relayCode" readonly></textarea>
+    <button id="relayCopy">Copy the reply</button>
+    <div class="codehint">Switch to the tab with the table on it and tap <b>Paste a reply</b>.</div>
+  </div>
+</section>
+
+<div class="stamp" id="stamp">v0.2.4</div>
+<div class="gatecredit" id="gateCredit">&copy; 2026 Ben Stiff @ Room46.uk</div>
+<div id="dbg"></div>
+
+<script>
+"use strict";
+const VERSION="0.2.4";
+const BUILD="HO·Ben Stiff @ Room46.uk·0.2.4·2026-11-22·bg7d2f";
+const LOCK_HOST="";   // e.g. "s77ffy.github.io" — empty means no lock
+const HOME_URL ="";   // e.g. "https://s77ffy.github.io/Brag/"
+(function lock(){
+  if(!LOCK_HOST) return;
+  const h=location.hostname;
+  if(location.protocol==="file:"||h==="localhost"||h==="127.0.0.1"||h===LOCK_HOST) return;
+  document.body.innerHTML='<section class="screen on" style="align-items:center;justify-content:center;text-align:center;padding:32px;gap:16px"><h1 style="font-weight:400">Unofficial copy</h1><p style="color:#8fa3c8">Play the real one at '+(HOME_URL?'<a href="'+HOME_URL+'" style="color:#22d3ee">'+HOME_URL+'</a>':'Room46.uk')+'</p></section>';
+  throw new Error("host lock");
+})();
+
+const $=s=>document.querySelector(s);
+function step(t){ const e=document.querySelector("#joinStep"); if(e) e.textContent=t; }
+function step2(){
+  const e=document.querySelector("#joinStep2"); if(!e) return;
+  const pc=P.pc; if(!pc) return;
+  e.textContent="link: "+pc.iceConnectionState+" / "+pc.connectionState;
+}
+const el=(t,c)=>{const e=document.createElement(t); if(c)e.className=c; return e;};
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const SUIT=["♠","♥","♦","♣"];
+const RANK=["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
+const cardRank=c=>RANK[c%13], cardSuit=c=>SUIT[(c/13)|0];
+const cardRed=c=>{const s=(c/13)|0; return s===1||s===2;};
+
+/* ===================== card faces (from Noms) ===================== */
+const PIPS={
+  2:[[50,22],[50,78,1]],
+  3:[[50,22],[50,50],[50,78,1]],
+  4:[[33,22],[67,22],[33,78,1],[67,78,1]],
+  5:[[33,22],[67,22],[50,50],[33,78,1],[67,78,1]],
+  6:[[33,22],[67,22],[33,50],[67,50],[33,78,1],[67,78,1]],
+  7:[[33,22],[67,22],[50,36],[33,50],[67,50],[33,78,1],[67,78,1]],
+  8:[[33,22],[67,22],[50,36],[33,50],[67,50],[50,64,1],[33,78,1],[67,78,1]],
+  9:[[33,20],[67,20],[33,41],[67,41],[50,50],[33,59,1],[67,59,1],[33,80,1],[67,80,1]],
+  10:[[33,20],[67,20],[50,30],[33,41],[67,41],[33,59,1],[67,59,1],[50,70,1],[33,80,1],[67,80,1]]
+};
+function cardFaceHTML(c){
+  const sym=cardSuit(c), rl=cardRank(c), r=(c%13)+2;   // 2..14
+  let h='<span class="corner"><b>'+rl+'</b><i>'+sym+'</i></span>';
+  if(r===14) h+='<span class="apip'+(((c/13)|0)===0?' asp':'')+'">'+sym+'</span>';
+  else if(r>=11) h+='<span class="court"><span class="cl">'+rl+'</span><span class="cs">'+sym+'</span></span>';
+  else{ const pp=PIPS[r]; for(let i=0;i<pp.length;i++)
+    h+='<span class="pip'+(pp[i][2]?' f':'')+'" style="left:'+pp[i][0]+'%;top:'+pp[i][1]+'%">'+sym+'</span>'; }
+  h+='<span class="corner br"><b>'+rl+'</b><i>'+sym+'</i></span>';
+  return h;
+}
+function faceEl(c,extra){
+  const e=el("div","card"+(cardRed(c)?" red":"")+(extra?" "+extra:""));
+  e.innerHTML=cardFaceHTML(c); e.setAttribute("aria-label",cardRank(c)+" of "+cardSuit(c));
+  return e;
+}
+function backEl(extra){
+  const e=el("div","card back"+(extra?" "+extra:"")); e.setAttribute("aria-hidden","true"); return e;
+}
+
+/* ===================== engine ===================== */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function hashStr(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function newHand(seed,round,n,knockRule){
+  const rnd=mulberry32(hashStr(seed+"#"+round));
+  const d=[...Array(52).keys()];
+  for(let i=51;i>0;i--){const j=Math.floor(rnd()*(i+1));[d[i],d[j]]=[d[j],d[i]];}
+  const hands=[]; let k=0;
+  for(let s=0;s<n;s++) hands.push([d[k++],d[k++],d[k++]]);
+  return { n, hands, table:[d[k++],d[k++],d[k++]], faceUp:[false,false,true], turn:0,
+           knockedBy:null, toGo:null, knockRule:knockRule||"same", done:false, winners:null };
+}
+function legal(G,seat){
+  if(!G||G.done||seat!==G.turn) return {swap:false,knock:false};
+  if(G.knockedBy!==null) return {swap:true,knock:false};
+  return {swap:true,knock:true};
+}
+function applyMove(G,seat,mv){
+  const can=legal(G,seat);
+  if(!can.swap&&!can.knock) return {ok:false,why:"not your go"};
+  const wantsSwap=mv.take!=null&&mv.drop!=null, wantsKnock=!!mv.knock;
+  if(wantsKnock&&!can.knock) return {ok:false,why:"you cannot knock now"};
+  if(G.knockRule==="next"&&wantsKnock&&wantsSwap) return {ok:false,why:"knock instead of swapping, not as well"};
+  if(G.knockRule==="same"&&!wantsSwap) return {ok:false,why:"you must swap on your go"};
+  if(G.knockRule==="next"&&!wantsSwap&&!wantsKnock) return {ok:false,why:"swap or knock"};
+  if(G.knockedBy!==null&&!wantsSwap) return {ok:false,why:"you must swap on your last go"};
+  if(wantsSwap){
+    if(mv.take<0||mv.take>2||mv.drop<0||mv.drop>2) return {ok:false,why:"no such card"};
+    const taken=G.table[mv.take], hand=G.hands[seat].slice();
+    hand.push(taken);
+    const dropped=hand.splice(mv.drop,1)[0];
+    G.hands[seat]=hand; G.table[mv.take]=dropped;
+  }
+  if(wantsKnock&&G.knockedBy===null){ G.knockedBy=seat; G.toGo=G.n-1; }
+  if(G.knockedBy!==null&&G.toGo!==null&&seat!==G.knockedBy) G.toGo--;
+  if(G.knockedBy!==null&&G.toGo<=0){ G.done=true; G.turn=null; }
+  else G.turn=(seat+1)%G.n;
+  return {ok:true};
+}
+function rankHand(cards){
+  const r=cards.map(c=>c%13).sort((a,b)=>b-a), su=cards.map(c=>(c/13)|0);
+  const flush=su[0]===su[1]&&su[1]===su[2], set=r[0]===r[1]&&r[1]===r[2];
+  const a23=r[0]===12&&r[1]===1&&r[2]===0;
+  const run=a23||(r[0]===r[1]+1&&r[1]===r[2]+1);
+  let cat,tie;
+  if(set){cat=5;tie=[r[0]===1?13:r[0]];}
+  else if(run&&flush){cat=4;tie=[a23?13:r[0]];}
+  else if(run){cat=3;tie=[a23?13:r[0]];}
+  else if(flush){cat=2;tie=r.slice();}
+  else if(r[0]===r[1]||r[1]===r[2]){const pr=r[1],kick=(r[0]===r[1])?r[2]:r[0];cat=1;tie=[pr,kick];}
+  else{cat=0;tie=r.slice();}
+  return {cat,tie,name:handName(cat,tie,r,a23)};
+}
+function handName(cat,tie,r,a23){
+  const P=["twos","threes","fours","fives","sixes","sevens","eights","nines","tens","jacks","queens","kings","aces"];
+  const N=["two","three","four","five","six","seven","eight","nine","ten","jack","queen","king","ace"];
+  const SH=["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
+  if(cat===5) return "prial of "+P[r[0]];
+  if(cat===4||cat===3){
+    const label=a23?"ace–three–two":N[r[0]]+" high";
+    return (cat===4?"running flush, ":"run, ")+label;
+  }
+  const three=SH[r[0]]+" "+SH[r[1]]+" "+SH[r[2]];
+  if(cat===2) return three+" flush";
+  if(cat===1) return "pair of "+P[tie[0]]+", "+SH[tie[1]]+" with it";
+  return three+" high";
+}
+function compareHands(a,b){
+  if(a.cat!==b.cat) return b.cat-a.cat;
+  for(let i=0;i<Math.max(a.tie.length,b.tie.length);i++){
+    const x=a.tie[i]||0,y=b.tie[i]||0; if(x!==y) return y-x;
+  }
+  return 0;
+}
+function showdown(entries){
+  const ranked=entries.map(e=>({...e,hand:rankHand(e.cards)}));
+  ranked.sort((x,y)=>compareHands(x.hand,y.hand));
+  let place=1;
+  ranked.forEach((e,i)=>{ if(i>0&&compareHands(ranked[i-1].hand,e.hand)!==0) place=i+1; e.place=place; });
+  return ranked;
+}
+
+/* ===================== compact SDP ===================== */
+function packSDP(sdp){
+  const get=re=>(sdp.match(re)||[])[1]||"";
+  const setup=get(/a=setup:(\S+)/);
+  const cands=[...sdp.matchAll(/a=candidate:\S+ \d+ (udp|UDP) \d+ (\S+) (\d+) typ (\w+)/g)]
+    .filter(m=>m[4]==="host"||m[4]==="srflx")
+    .map(m=>`${m[2]}:${m[3]}${m[4]==="srflx"?"!s":""}`);
+  return [ get(/a=ice-ufrag:(\S+)/), get(/a=ice-pwd:(\S+)/),
+           get(/a=fingerprint:sha-256 (\S+)/).replace(/:/g,""),
+           {actpass:"A",active:"a",passive:"p"}[setup]||"A",
+           [...new Set(cands)].join(",") ].join("~");
+}
+function unpackSDP(packed,type){
+  const [ufrag,pwd,fp,code,cands]=packed.split("~");
+  const setup={A:"actpass",a:"active",p:"passive"}[code]||"actpass";
+  const fpc=(fp.match(/../g)||[]).join(":").toUpperCase();
+  const L=["v=0","o=- 1 2 IN IP4 127.0.0.1","s=-","t=0 0","a=group:BUNDLE 0",
+    "a=msid-semantic: WMS","m=application 9 UDP/DTLS/SCTP webrtc-datachannel","c=IN IP4 0.0.0.0",
+    "a=ice-ufrag:"+ufrag,"a=ice-pwd:"+pwd,"a=ice-options:trickle",
+    "a=fingerprint:sha-256 "+fpc,"a=setup:"+setup,"a=mid:0","a=sctp-port:5000","a=max-message-size:262144"];
+  let n=1;
+  for(const c of (cands||"").split(",").filter(Boolean)){
+    const sr=c.endsWith("!s"), body=sr?c.slice(0,-2):c;
+    const i=body.lastIndexOf(":"), ip=body.slice(0,i), port=body.slice(i+1);
+    L.push(`a=candidate:${n++} 1 udp ${sr?1677729535:2113937151} ${ip} ${port} typ ${sr?"srflx raddr 0.0.0.0 rport 0":"host"} generation 0`);
+  }
+  return {type, sdp:L.join("\r\n")+"\r\n"};
+}
+const ICE=[{urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]},
+           {urls:"stun:stun.cloudflare.com:3478"}];
+// Browsers hide a device's real address behind an mDNS ".local" name until the
+// page has been granted a microphone or camera. Where those names will not
+// resolve between two devices, that hiding is what stops them ever meeting.
+let REALADDR=false;
+async function useRealAddresses(){
+  try{
+    const st=await navigator.mediaDevices.getUserMedia({audio:true});
+    st.getTracks().forEach(t=>t.stop());      // nothing is recorded or kept
+    REALADDR=true; return true;
+  }catch(e){ return false; }
+}
+// Wait for candidates properly. iOS hides local addresses behind mDNS and
+// takes its time, so a flat short timeout can ship an empty answer that
+// silently never connects.
+function gathered(pc, onTick){
+  return new Promise(r=>{
+    let seen=0, relayed=0, started=Date.now(), done=false;
+    const finish=()=>{ if(done) return; done=true; clearInterval(iv); r(seen); };
+    pc.addEventListener("icecandidate",e=>{
+      if(e.candidate && e.candidate.candidate){
+        seen++;
+        if(/ typ (srflx|relay)/.test(e.candidate.candidate)) relayed++;
+        if(onTick) onTick(seen,relayed);
+      }
+      if(!e.candidate) finish();                       // gathering finished
+    });
+    const iv=setInterval(()=>{
+      const ms=Date.now()-started;
+      if(pc.iceGatheringState==="complete") return finish();
+      // a route via a stun server is worth waiting for: hidden .local names do
+      // not always resolve between two devices on the same wi-fi
+      if(relayed>0 && ms>1200) return finish();
+      if(seen>0 && ms>5000) return finish();
+      if(ms>9000) return finish();
+    },200);
+    if(pc.iceGatheringState==="complete") finish();
+  });
+}
+function countCands(packed){
+  return (packed.split("~")[4]||"").split(",").filter(Boolean).length;
+}
+function candKinds(packed){
+  const list=(packed.split("~")[4]||"").split(",").filter(Boolean);
+  let mdns=0, lan=0, pub=0;
+  for(const c of list){
+    if(c.endsWith("!s")) pub++;
+    else if(/\.local:/.test(c)) mdns++;
+    else lan++;
+  }
+  return {n:list.length, mdns, lan, pub};
+}
+function kindText(k){
+  if(!k || !k.n) return "no routes";
+  const bits=[];
+  if(k.mdns) bits.push(k.mdns+" hidden local");
+  if(k.lan)  bits.push(k.lan+" local");
+  if(k.pub)  bits.push(k.pub+" via stun");
+  return bits.join(", ");
+}
+
+/* ===================== storage ===================== */
+const store={
+  get host(){ try{return JSON.parse(localStorage.getItem("brag.host")||"null");}catch(e){return null;} },
+  set host(v){ try{localStorage.setItem("brag.host",JSON.stringify(v));}catch(e){} },
+  get me(){ try{return JSON.parse(localStorage.getItem("brag.me")||"null");}catch(e){return null;} },
+  set me(v){ try{localStorage.setItem("brag.me",JSON.stringify(v));}catch(e){} }
+};
+function hashParams(){
+  const h=location.hash.replace(/^#/,""); if(!h) return null;
+  const p={}; for(const kv of h.split("&")){const i=kv.indexOf("="); if(i>0) p[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1));}
+  return p;
+}
+let dbgOn=false;
+function toggleDbg(){ dbgOn=!dbgOn; $("#dbg").classList.toggle("on",dbgOn); drawDbg(); }
+$("#stamp").addEventListener("click",toggleDbg);
+function drawDbg(lines){ if(dbgOn&&lines) $("#dbg").innerHTML=lines.join("<br>"); }
+
+/* ===================== host ===================== */
+const H={ seats:[], round:0, seed:null, G:null, knockRule:"same", ranked:null };
+const LINKS={};                       // seat -> {pc, dc, state}
+
+function hostBoot(){
+  const saved=store.host;
+  if(saved){ H.seats=saved.seats||[]; H.round=saved.round||0; H.seed=saved.seed; H.knockRule=saved.knockRule||"same"; }
+  if(!H.seed) H.seed=rnd12().slice(0,8);
+  if(!H.seats.length) H.seats=[{n:"You",local:true}];
+  if(!H.seats[0].local) H.seats.unshift({n:"You",local:true});
+  H.seats.forEach(s=>{ s.sent=false; });   // connections never survive a reload
+  document.body.classList.add("hostview");
+  $("#hostCredit").textContent="© 2026 Ben Stiff @ Room46.uk · v"+VERSION;
+  $("#hostCredit").onclick=toggleDbg;
+  $("#gate").classList.remove("on"); $("#host").classList.add("on");
+  $("#gateCredit").classList.remove("on");
+  $("#roundLbl").onclick=()=>{
+    H.knockRule = H.knockRule==="same" ? "next" : "same";
+    saveHost(); render();
+    pushAll();
+  };
+  listenForReplies();
+  render();
+}
+function rnd12(){ const a=new Uint8Array(8); crypto.getRandomValues(a); return [...a].map(b=>b.toString(16).padStart(2,"0")).join(""); }
+const MAXSEATS=10;
+function saveHost(){ store.host={seats:H.seats.map(s=>({n:s.n,local:!!s.local})),round:H.round,seed:H.seed,knockRule:H.knockRule}; }
+
+/* --- pairing --- */
+async function inviteSeat(i){
+  const seat=H.seats[i];
+  if(LINKS[i]&&LINKS[i].pc){ try{LINKS[i].pc.close();}catch(e){} }
+  const pc=new RTCPeerConnection({iceServers:ICE});
+  const dc=pc.createDataChannel("brag",{ordered:true});
+  LINKS[i]={pc,dc,state:"offering"};
+  dc.onopen=()=>{ LINKS[i].state="open"; render(); push(i); };
+  dc.onclose=()=>{ LINKS[i].state="closed"; render(); };
+  dc.onmessage=e=>onPlayerMsg(i,e.data);
+  pc.oniceconnectionstatechange=()=>{ LINKS[i].ice=pc.iceConnectionState; render(); };
+  pc.onconnectionstatechange=()=>{
+    const st=pc.connectionState;
+    LINKS[i].conn=st;
+    if(st==="failed"||st==="disconnected") LINKS[i].state=st;
+    render();
+  };
+  LINKS[i].state="looking for a route"; render();
+  await pc.setLocalDescription(await pc.createOffer());
+  await gathered(pc);
+  const packed=packSDP(pc.localDescription.sdp);
+  LINKS[i].mine=candKinds(packed);
+  const base=location.href.split("#")[0];
+  const url=`${base}#s=${i}&n=${encodeURIComponent(seat.n)}&o=${encodeURIComponent(packed)}`;
+  seat.sent=true;
+  LINKS[i].state = LINKS[i].mine.n===0 ? "this device found no route" : "waiting";
+  render();
+  try{
+    if(navigator.share) await navigator.share({title:"Brag – "+seat.n,url});
+    else prompt("AirDrop or send this link to the player:",url);
+  }catch(e){}
+}
+async function takeAnswer(i,packed){
+  const L=LINKS[i];
+  if(!L||!L.pc) return;
+  // the reply reaches us by broadcast AND by storage; claim it once, before
+  // the await, or the loser of the race reports a failure over a good link
+  if(L.claimed===packed) return;
+  if(L.claimed) return;
+  if(L.pc.signalingState!=="have-local-offer") return;
+  L.claimed=packed;
+  try{ if(H.ch) H.ch.postMessage({t:"ack",seat:i}); }catch(e){}
+  try{ localStorage.setItem("brag.ack",JSON.stringify({seat:i,at:Date.now()})); }catch(e){}
+  L.theirs=candKinds(packed);
+  try{ await L.pc.setRemoteDescription(unpackSDP(packed,"answer")); L.state="joining"; render(); }
+  catch(e){ L.claimed=null; L.state="bad reply"; render(); }
+}
+function listenForReplies(){
+  const apply=(seat,sdp)=>takeAnswer(+seat,sdp);
+  try{
+    const ch=new BroadcastChannel("brag46");
+    ch.onmessage=e=>{ if(e.data&&e.data.t==="answer") apply(e.data.seat,e.data.sdp); };
+    H.ch=ch;
+  }catch(e){}
+  addEventListener("storage",e=>{
+    if(e.key==="brag.reply"&&e.newValue){
+      try{const d=JSON.parse(e.newValue); apply(d.seat,d.sdp);}catch(x){}
+    }
+  });
+  setInterval(()=>{                       // belt and braces, in case neither fires
+    let raw=null; try{raw=localStorage.getItem("brag.reply");}catch(e){}
+    if(!raw) return;
+    try{
+      const d=JSON.parse(raw);
+      if(d.at===H.lastReply) return;
+      H.lastReply=d.at;
+      const L=LINKS[+d.seat];
+      if(L&&!L.claimed) apply(d.seat,d.sdp);
+    }catch(e){}
+  },700);
+}
+
+/* --- talking to the phones --- */
+function viewFor(seat){
+  const G=H.G;
+  if(!G) return {t:"state",seat,names:H.seats.map(s=>s.n),waiting:true,knockRule:H.knockRule};
+  return { t:"state", seat, names:H.seats.map(s=>s.n), knockRule:G.knockRule,
+           you:G.hands[seat].slice(), table:G.table.slice(), faceUp:G.faceUp.slice(),
+           turn:G.turn, knockedBy:G.knockedBy, toGo:G.toGo, done:G.done, round:H.round,
+           can:legal(G,seat),
+           show: G.done&&H.ranked ? {hands:G.hands,winners:G.winners,
+                  names:H.ranked.map(r=>({i:r.i,name:r.hand.name}))} : null };
+}
+function push(i){
+  if(H.seats[i]&&H.seats[i].local) return;
+  const L=LINKS[i];
+  if(L&&L.dc&&L.dc.readyState==="open"){ try{ L.dc.send(JSON.stringify(viewFor(i))); }catch(e){} }
+}
+function pushAll(){ H.seats.forEach((s,i)=>push(i)); }
+function onPlayerMsg(i,raw){
+  let m; try{ m=JSON.parse(raw); }catch(e){ return; }
+  if(m.t==="move"&&H.G){
+    const r=applyMove(H.G,i,{take:m.take,drop:m.drop,knock:m.knock});
+    if(r.ok){
+      if(H.G.done){ H.ranked=showdown(H.G.hands.map((cards,x)=>({i:x,cards}))); H.G.winners=H.ranked.filter(e=>e.place===1).map(e=>e.i); }
+      render(); pushAll();
+    } else push(i);
+  }
+}
+
+/* --- render --- */
+function render(){
+  const G=H.G;
+  $("#roundLbl").innerHTML="hand "+H.round+" · <u>"+(H.knockRule==="same"?"swap &amp; knock":"knock next go")+"</u>";
+  const bw=$("#boardWrap"); bw.style.display=G?"block":"none";
+  if(G){
+    const b=$("#board"); b.innerHTML="";
+    const myGo = !G.done && G.turn===localSeat();
+    G.table.forEach((c,k)=>{
+      const e = (G.faceUp[k]||G.done) ? faceEl(c) : backEl();
+      if(myGo && H.taken==null){ e.classList.add("pickable"); e.onclick=()=>{ H.taken=k; render(); }; }
+      if(H.taken===k) e.style.opacity=".25";
+      b.appendChild(e);
+    });
+  }
+  const c=$("#seats"); c.innerHTML="";
+  H.seats.forEach((s,i)=>{
+    const L=LINKS[i], open=L&&L.state==="open";
+    const d=el("div","seat"+(open||s.local?" live":""));
+    if(G&&!G.done&&G.turn===i) d.classList.add("now");
+    if(G&&G.done&&G.winners&&G.winners.indexOf(i)>=0) d.classList.add("won");
+    const h=el("h3"); h.appendChild(document.createTextNode(s.n));
+    const bg=el("span","badge"+(s.local?" on":(open?" on":(s.sent?" sent":""))));
+    bg.textContent = s.local ? "this device"
+                   : open ? "connected"
+                   : (L ? (L.state||"waiting") : "not invited yet");
+    h.appendChild(bg);
+    if(H.seats.length>1 && !s.local){
+      const x=el("button","drop"); x.textContent="×";
+      x.onclick=()=>{
+        if(LINKS[i]&&LINKS[i].pc){ try{LINKS[i].pc.close();}catch(e){} }
+        const keys=Object.keys(LINKS).map(Number).sort((a,b)=>a-b);
+        const re={}; keys.forEach(k=>{ if(k<i) re[k]=LINKS[k]; else if(k>i) re[k-1]=LINKS[k]; });
+        keys.forEach(k=>delete LINKS[k]); Object.assign(LINKS,re);
+        H.seats.splice(i,1);
+        H.seats.forEach((q,j)=>{ if(/^Player \d+$/.test(q.n)) q.n="Player "+j; });
+        H.G=null; H.taken=null; saveHost(); render();
+      };
+      h.appendChild(x);
+    }
+    d.appendChild(h);
+    const m=el("div","mini");
+    const mine=!!s.local;
+    if(!G){ for(let j=0;j<3;j++){ const e=el("div","card back"); e.style.opacity=".25"; m.appendChild(e); } }
+    else if(mine){
+      const cards = H.taken==null ? G.hands[i].slice() : G.hands[i].concat([G.table[H.taken]]);
+      const myGo = !G.done && G.turn===i;
+      cards.forEach((c,j)=>{
+        const e=faceEl(c);
+        if(H.taken!=null && j===cards.length-1) e.classList.add("justtook");
+        if(myGo && H.taken!=null){ e.classList.add("pickable"); e.onclick=()=>playLocal(j); }
+        m.appendChild(e);
+      });
+    }
+    else if(G.done) for(let j=0;j<3;j++) m.appendChild(faceEl(G.hands[i][j]));
+    else for(let j=0;j<3;j++) m.appendChild(backEl());
+    d.appendChild(m);
+    if(mine && G && !G.done && G.turn===i){
+      const act=el("div","seatact");
+      const can=legal(G,i);
+      if(can.knock){
+        const k=el("button","knock"+(H.knockWith?" armed":""));
+        if(G.knockRule==="next" && H.taken==null){
+          k.textContent="Knock \u2014 I'm happy"; k.onclick=()=>playLocal(null,true);
+        } else if(G.knockRule==="same"){
+          k.textContent = H.knockWith ? "Knocking \u2713" : "Knock with this swap";
+          k.onclick=()=>{ H.knockWith=!H.knockWith; render(); };
+        }
+        if(k.textContent) act.appendChild(k);
+      }
+      const note=el("span","seatnote");
+      note.textContent = H.taken==null ? "take one from the table" : "tap one of yours to put back";
+      act.appendChild(note);
+      d.appendChild(act);
+    }
+    if(!s.local && L && L.state!=="open"){
+      const bits=[];
+      if(L.mine)   bits.push("this device: "+kindText(L.mine));
+      if(L.theirs) bits.push("their phone: "+kindText(L.theirs));
+      if(L.ice)    bits.push("link: "+L.ice);
+      if(bits.length){ const dg=el("div","diag"); dg.textContent=bits.join(" \u00b7 "); d.appendChild(dg); }
+    }
+    const hn=el("div","hand-name");
+    if(G&&G.done) hn.textContent=rankHand(G.hands[i]).name;
+    else if(G&&s.local) hn.textContent="your hand \u2014 keep this device to yourself";
+    else if(G&&G.knockedBy===i) hn.textContent="knocked";
+    d.appendChild(hn);
+    c.appendChild(d);
+  });
+  renderStep();
+}
+function localSeat(){ return H.seats.findIndex(s=>s.local); }
+function playLocal(dropIdx, knockOnly){
+  const G=H.G, i=localSeat();
+  if(!G||G.done||G.turn!==i) return;
+  const mv = knockOnly ? {take:null,drop:null,knock:true}
+                       : {take:H.taken, drop:dropIdx, knock:G.knockRule==="same"&&!!H.knockWith};
+  if(!applyMove(G,i,mv).ok) return;
+  H.taken=null; H.knockWith=false;
+  if(G.done){ H.ranked=showdown(G.hands.map((cards,x)=>({i:x,cards}))); G.winners=H.ranked.filter(e=>e.place===1).map(e=>e.i); }
+  render(); pushAll();
+}
+function renderStep(){
+  const G=H.G, anyOpen=H.seats.some((s,i)=>!s.local&&LINKS[i]&&LINKS[i].state==="open");
+  let n=1,t="",btn="Deal";
+  if(!anyOpen){
+    const waitingFor=H.seats.find((s,i)=>!s.local&&LINKS[i]&&!LINKS[i].claimed);
+    t = waitingFor
+      ? "Waiting on "+waitingFor.n+". On their phone: tap Join the table, then Copy my reply. Get that code to this device, then tap Paste a reply."
+      : "You are in as "+H.seats[0].n+". Tap Invite a player and send the link to their phone.";
+  } else if(!G){
+    n=2; t="Everyone connected? Deal. Each phone gets three cards and the table gets three, two down and one up.";
+  } else if(!G.done){
+    n=3; btn="Deal";
+    const who=G.turn===localSeat() ? "Your go" : (H.seats[G.turn]?H.seats[G.turn].n+" to go":"–");
+    t = G.knockedBy!==null
+      ? H.seats[G.knockedBy].n+" knocked. "+who+", "+G.toGo+" more "+(G.toGo===1?"swap":"swaps")+" before the show."
+      : who+". Take one from the table and put one back in its place.";
+  } else {
+    n=4; btn="Deal";
+    const ws=(G.winners||[]), w=ws.map(i=>H.seats[i].n);
+    const hadName=rankHand(G.hands[ws[0]]).name;
+    const youOnly = ws.length===1 && H.seats[ws[0]].local;
+    t = (w.length>1 ? w.join(" and ")+" split it with "+hadName+"."
+                    : (youOnly ? "You win with "+hadName+"." : w[0]+" wins with "+hadName+"."))
+        +" Deal for the next hand.";
+  }
+  $("#stepNo").textContent=n; $("#stepTxt").textContent=t;
+  $("#deal").textContent=btn;
+  $("#deal").disabled=!anyOpen;
+  const waiting=H.seats.some((s,i)=>!s.local && LINKS[i] && !LINKS[i].claimed);
+  $("#pasteReply").style.display = waiting ? "" : "none";
+  const stuck=H.seats.some((s,i)=>!s.local&&LINKS[i]&&LINKS[i].state!=="open");
+  $("#hostReport").style.display = stuck ? "" : "none";
+  const full=H.seats.length>=MAXSEATS;
+  $("#addSeat").disabled=full;
+  $("#addSeat").textContent = full ? "Table full (10)" : "Invite a player ("+H.seats.length+"/10)";
+  $("#hostTip").innerHTML = H.knockRule==="same"
+    ? "House rule: a player swaps and may knock on the same go. Tap <u>swap &amp; knock</u> above to switch to knocking on your next go instead."
+    : "House rule: a player either swaps or knocks, so knocking costs you a go. Tap <u>knock next go</u> above to switch back.";
+}
+
+$("#addSeat").onclick=async()=>{
+  let i=H.seats.findIndex((s,k)=>!s.local && !LINKS[k]);
+  if(i<0){
+    if(H.seats.length>=MAXSEATS) return;
+    H.seats.push({n:"Player "+H.seats.length}); i=H.seats.length-1;
+  }
+  saveHost(); render();
+  await inviteSeat(i);
+};
+function netReport(){
+  const L=[];
+  const host=document.body.classList.contains("hostview");
+  L.push("Brag v"+VERSION+" connection report");
+  L.push("when: "+new Date().toISOString());
+  L.push("role: "+(host?"dealer":"player"));
+  L.push("real addresses: "+(REALADDR?"on":"off"));
+  L.push("page: "+location.href.split("#")[0]);
+  L.push("browser: "+navigator.userAgent);
+  if(host){
+    H.seats.forEach((s,i)=>{
+      const k=LINKS[i];
+      if(s.local) return L.push("seat "+i+" "+s.n+": this device");
+      if(!k)      return L.push("seat "+i+" "+s.n+": not invited");
+      L.push("seat "+i+" "+s.n+": state="+k.state+" ice="+(k.ice||"-")+" conn="+(k.conn||"-")
+        +" | mine="+kindText(k.mine)+" | theirs="+kindText(k.theirs)
+        +" | reply="+(k.claimed?"taken":"none"));
+    });
+  } else {
+    L.push("seat: "+P.seat+" ("+P.name+")");
+    L.push("net="+P.net+" ice="+(P.pc?P.pc.iceConnectionState:"-")+" conn="+(P.pc?P.pc.connectionState:"-"));
+    L.push("mine="+kindText(P.mine)+" | theirs="+kindText(P.theirs));
+    L.push("dealt: "+(P.S&&P.S.you?"yes":"no"));
+  }
+  return L.join("\n");
+}
+async function copyReport(btn){
+  const txt=netReport(), was="Copy connection report";
+  try{ await navigator.clipboard.writeText(txt); btn.textContent="Report copied"; }
+  catch(e){ prompt("Copy this and send it on:", txt); }
+  setTimeout(()=>{ btn.textContent=was; },2500);
+}
+function parseReply(txt){
+  if(!txt) return null;
+  const t=txt.trim();
+  const m=t.match(/[#&]a=([^&\s]+)/);
+  if(m){
+    const sm=t.match(/[#&]s=(\d+)/);
+    return { sdp:decodeURIComponent(m[1]), seat: sm?+sm[1]:null };
+  }
+  if(t.indexOf("~")>0) return { sdp:t, seat:null };     // a bare code
+  return null;
+}
+async function pasteReply(){
+  let txt="";
+  try{ txt=await navigator.clipboard.readText(); }catch(e){}
+  if(!txt) txt=prompt("Paste the reply from the player's phone:","")||"";
+  const r=parseReply(txt);
+  if(!r){ alert("That did not look like a reply. Copy the whole code from the player's phone."); return; }
+  let seat=r.seat;
+  if(seat==null || !LINKS[seat] || LINKS[seat].claimed){
+    seat=H.seats.findIndex((s,i)=>!s.local && LINKS[i] && !LINKS[i].claimed);
+  }
+  if(seat<0 || !LINKS[seat]){ alert("No seat is waiting for a reply. Press Invite a player first."); return; }
+  await takeAnswer(seat, r.sdp);
+}
+$("#pasteReply").onclick=pasteReply;
+$("#hostReport").onclick=e=>copyReport(e.target);
+$("#deal").onclick=()=>{
+  H.round++; H.taken=null; H.knockWith=false;
+  H.G=newHand(H.seed,H.round,H.seats.length,H.knockRule);
+  H.ranked=null;
+  saveHost(); render(); pushAll();
+};
+
+/* ===================== hand (a player's phone) ===================== */
+const P={ seat:0, name:"Seat 1", S:null, taken:null, pc:null, dc:null, net:"offline" };
+let slots=[];
+
+function handBoot(cfg){
+  Object.assign(P,cfg);
+  document.body.classList.add("handview");
+  $("#hCredit").textContent="© 2026 Ben Stiff @ Room46.uk · v"+VERSION;
+  $("#hCredit").onclick=toggleDbg;
+  $("#gate").classList.remove("on"); $("#hand").classList.add("on");
+  $("#gateCredit").classList.remove("on");
+  addEventListener("resize",()=>{ sizeCards(); layout(); });
+  try{ navigator.wakeLock && navigator.wakeLock.request("screen").catch(()=>{}); }catch(e){}
+  drawHand();
+}
+async function joinTable(packedOffer, seat, name){
+  const pc=new RTCPeerConnection({iceServers:ICE});
+  P.pc=pc; P.net="connecting";
+  pc.ondatachannel=e=>{
+    P.dc=e.channel;
+    e.channel.onopen=()=>{
+      P.net="open";
+      // the dealer took the reply, however it reached them: deal me in
+      if(!document.body.classList.contains("handview")) handBoot({seat:seat||0,name:name||"Player"});
+      drawHand();
+    };
+    e.channel.onclose=()=>{ P.net="closed"; drawHand(); };
+    e.channel.onmessage=ev=>{
+      let m; try{ m=JSON.parse(ev.data); }catch(x){ return; }
+      if(m.t==="state"){ P.S=m; P.taken=null; P.knockWith=false; P.name=m.names[m.seat]||P.name; drawHand(); }
+    };
+  };
+  pc.oniceconnectionstatechange=()=>{ step2(); drawHand(); };
+  pc.onconnectionstatechange=()=>{
+    if(pc.connectionState==="failed"){ P.net="failed"; }
+    step2(); drawHand();
+  };
+  P.theirs=candKinds(packedOffer);
+  step("Reading the invite");
+  await pc.setRemoteDescription(unpackSDP(packedOffer,"offer"));
+  step("Making your reply");
+  await pc.setLocalDescription(await pc.createAnswer());
+  step("Finding a route to the table");
+  await gathered(pc, n=>step("Finding a route to the table \u2014 "+n+" found"));
+  const packed=packSDP(pc.localDescription.sdp);
+  P.mine=candKinds(packed);
+  if(P.mine.n===0) throw new Error("This phone found no way to reach the table. Check it is on the same wi-fi as the dealer, not mobile data.");
+  step("You: "+kindText(P.mine)+" \u00b7 table: "+kindText(P.theirs));
+  return packed;
+}
+function send(o){ if(P.dc&&P.dc.readyState==="open"){ try{P.dc.send(JSON.stringify(o));}catch(e){} } }
+
+/* --- geometry --- */
+let FAN=8, CW=200, SINKPX=40, RAISE=1.15, TW=62;
+const PIVOT=1.40, PAD=0.06, STRIP=56, EDGE=6;
+function sizeCards(){
+  const W=innerWidth, Hh=innerHeight;
+  const n=Math.max(slots.length,1), half=(n-1)/2, spread=STRIP*half;
+  TW=Math.round(Math.min(Math.max(W*0.185,54), 92));
+  document.documentElement.style.setProperty("--tw",TW+"px");
+  const topUsed = 72 + (TW*1.4) + 96;                // turn line + table cards + hint + buttons
+  let cw=(W/2-EDGE-spread)/(0.5-PAD);
+  cw=Math.min(cw, (Hh-topUsed)*0.78, W*0.80);
+  CW=Math.round(cw);
+  document.documentElement.style.setProperty("--cw",CW+"px");
+  SINKPX=Math.round(CW*1.4*0.10);
+  document.documentElement.style.setProperty("--sink",SINKPX+"px");
+  FAN=(n>1)?Math.asin(Math.min(STRIP/(PIVOT*CW*1.4),0.3))*180/Math.PI:0;
+  RAISE=Math.min((W*0.92)/CW,(Hh-topUsed-20)*0.95/(CW*1.4));
+  if(RAISE<1) RAISE=1;
+}
+function baseAngle(i,n){ return (i-(n-1)/2)*FAN; }
+
+/* --- draw --- */
+function drawHand(){
+  const S=P.S;
+  const whose=$("#whose"), row=$("#tablerow"), act=$("#actions"), hint=$("#hint");
+  act.innerHTML=""; row.innerHTML="";
+  if(!S||S.waiting||!S.you){
+    whose.className="whose";
+    whose.textContent = P.net==="open" ? "waiting for the deal" :
+                        P.net==="connecting" ? "connecting…" :
+                        P.net==="failed" ? "could not reach the table" : "not connected";
+    $("#pile").innerHTML=""; slots=[]; hint.textContent=""; return;
+  }
+  const mine = S.turn===S.seat && !S.done;
+  whose.className="whose"+(mine?" you":"");
+  if(S.done){
+    const w=(S.show&&S.show.winners)||[];
+    whose.textContent = w.indexOf(S.seat)>=0 ? "You win it" : (w.length? S.names[w[0]]+" wins it" : "Show");
+  } else if(mine) whose.innerHTML = P.taken==null ? "<b>Your go</b> — take one from the table" : "<b>Your go</b> — put one back";
+  else whose.innerHTML = "<b>"+esc(S.names[S.turn]||"–")+"</b> to go";
+
+  S.table.forEach((c,k)=>{
+    const t=el("div","tslot");
+    const faceUp = S.faceUp[k]||S.done;
+    t.appendChild(faceUp?faceEl(c):backEl());
+    if(mine && P.taken==null && S.can && S.can.swap){
+      t.classList.add("pick");
+      t.onclick=()=>{ P.taken=k; drawHand(); };
+    }
+    if(P.taken===k) t.classList.add("gone");
+    row.appendChild(t);
+  });
+
+  if(S.done && S.show){
+    const mineName=(S.show.names||[]).find(x=>x.i===S.seat);
+    hint.textContent=mineName?("You had "+mineName.name):"";
+  } else if(mine && P.taken!=null) hint.textContent = P.knockWith
+      ? "Put one back and you have knocked" : "Tap a card to put it back, or flick it away";
+  else if(mine) hint.textContent = S.knockedBy!==null ? "Last go before the show" : "";
+  else hint.textContent = S.knockedBy!=null ? (S.names[S.knockedBy]+" knocked") : "";
+  positionHint();
+
+  if(mine && S.can && S.can.knock){
+    if(S.knockRule==="next" && P.taken==null){
+      const k=el("button","knock"); k.textContent="Knock \u2014 I'm happy";
+      k.onclick=()=>{ send({t:"move",take:null,drop:null,knock:true}); P.taken=null; };
+      act.appendChild(k);
+    } else if(S.knockRule==="same"){
+      // swap and knock on the same go: arm it, then put a card back
+      const k=el("button","knock"+(P.knockWith?" armed":""));
+      k.textContent = P.knockWith ? "Knocking \u2713" : "Knock with this swap";
+      k.onclick=()=>{ P.knockWith=!P.knockWith; drawHand(); };
+      act.appendChild(k);
+    }
+  }
+  drawSlots();
+}
+function positionHint(){
+  const fanTop = innerHeight + SINKPX - CW*1.4;      // where the held cards begin
+  const barBottom = 72, th = TW*1.4;
+  let top = barBottom + (fanTop - barBottom - th)/2 - 16;
+  top = Math.max(barBottom, Math.min(top, fanTop - th - 96));
+  $("#tablerow").style.top = Math.round(top)+"px";
+  $("#hint").style.top = Math.round(top + th + 14)+"px";
+  $("#actions").style.top = Math.round(top + th + 40)+"px";
+}
+function cardsInHand(){
+  const S=P.S; if(!S||!S.you) return [];
+  return P.taken==null ? S.you.slice() : S.you.concat([S.table[P.taken]]);
+}
+function drawSlots(){
+  const pile=$("#pile"); pile.innerHTML=""; slots=[];
+  const cards=cardsInHand(), S=P.S;
+  const faceUp = true;
+  cards.forEach((c,i)=>{
+    const s=el("div","slot");
+    const f=el("div","flipper");
+    const back=el("div","face"); back.appendChild(backEl());
+    const front=el("div","face front"); front.appendChild(faceEl(c));
+    f.appendChild(back); f.appendChild(front); s.appendChild(f);
+    if(P.taken!=null && i===cards.length-1) s.classList.add("taken");
+    pile.appendChild(s);
+    const rec={node:s,idx:i,dx:0,dy:0,raised:false};
+    slots.push(rec); bindSlot(rec,c);
+  });
+  sizeCards();
+  slots.forEach(s=>{ s.node.classList.add("up"); place(s,false); });
+  positionHint();
+}
+function place(s,anim){
+  const n=slots.length,a=baseAngle(s.idx,n);
+  s.node.style.transition=anim?"":"none";
+  if(s.raised){
+    const centreY=innerHeight+SINKPX-(CW*1.4)/2;
+    const up=centreY-innerHeight*0.60;
+    s.node.style.transformOrigin="50% 50%";
+    s.node.style.transform=`translate(${s.dx}px,${s.dy-up}px) rotate(0deg) scale(${RAISE})`;
+  }else{
+    s.node.style.transformOrigin="50% 140%";
+    s.node.style.transform=`translate(${s.dx}px,${s.dy}px) rotate(${a}deg)`;
+  }
+  s.node.style.zIndex=s.raised?50:10+s.idx;
+}
+function layout(){ slots.forEach(s=>place(s,true)); positionHint(); }
+function dropCard(i){
+  const S=P.S; if(!S||P.taken==null) return;
+  send({t:"move",take:P.taken,drop:i,knock:S.knockRule==="same"&&P.knockWith===true});
+  P.knockWith=false; P.taken=null;
+  slots.forEach(s=>{s.raised=false;});
+}
+function bindSlot(s,card){
+  let id=null,x0=0,y0=0,moved=0,hist=[];
+  s.node.addEventListener("pointerdown",e=>{
+    id=e.pointerId; s.node.setPointerCapture(id);
+    x0=e.clientX;y0=e.clientY;moved=0;hist=[{t:performance.now(),x:e.clientX,y:e.clientY}];
+    s.node.style.transition="none";
+  });
+  s.node.addEventListener("pointermove",e=>{
+    if(e.pointerId!==id) return;
+    s.dx=e.clientX-x0; s.dy=e.clientY-y0;
+    moved=Math.max(moved,Math.hypot(s.dx,s.dy));
+    hist.push({t:performance.now(),x:e.clientX,y:e.clientY}); if(hist.length>8) hist.shift();
+    s.node.style.zIndex=60; place(s,false);
+  });
+  s.node.addEventListener("pointerup",e=>{
+    if(e.pointerId!==id) return; id=null;
+    const now=performance.now(),old=hist[0],dt=Math.max(now-old.t,1);
+    const vy=(e.clientY-old.y)/dt;
+    const canDrop = P.taken!=null;
+    if(canDrop && (vy<-0.55 || s.dy<-150)){ dropCard(s.idx); return; }   // flicked away
+    if(moved<12){
+      if(canDrop && s.raised){ dropCard(s.idx); return; }                 // tap a raised card to drop it
+      const r=!s.raised; slots.forEach(o=>{o.raised=false;o.dx=0;o.dy=0;});
+      s.raised=r; layout(); return;
+    }
+    s.dx=0;s.dy=0;place(s,true);
+  });
+  s.node.addEventListener("pointercancel",()=>{ id=null;s.dx=0;s.dy=0;place(s,true); });
+}
+
+/* ===================== boot ===================== */
+$("#stamp").textContent="v"+VERSION;
+$("#gateCredit").classList.add("on");
+$("#beHost").onclick=()=>hostBoot();
+$("#bePlayer").onclick=()=>{
+  $("#gateMsg").textContent="Ask the dealer to AirDrop you an invite — that link brings you straight in.";
+};
+(function(){
+  const p=hashParams();
+  if(p&&p.o){                       // an invite: become a hand
+    $("#beHost").style.display="none";
+    $("#gateMsg").textContent="You have been dealt in as "+(p.n||"a player")+".";
+    const b=$("#bePlayer"); b.textContent="Join the table"; b.className="primary";
+    b.onclick=async()=>{
+      b.disabled=true; b.textContent="Connecting…";
+      let answer;
+      try{ answer=await joinTable(p.o, +(p.s||0), p.n||"Player"); }
+      catch(e){
+        $("#gateMsg").textContent = (e&&e.message) ? e.message
+          : "That invite could not be read. Ask the dealer for a fresh one.";
+        step(""); b.disabled=false; b.textContent="Try again"; return;
+      }
+      const base=location.href.split("#")[0];
+      const url=`${base}#s=${p.s||0}&a=${encodeURIComponent(answer)}`;
+      $("#gateMsg").textContent="Send your reply back to the dealer. You will be dealt in the moment they take it.";
+      $("#joinCode").value=answer;
+      $("#joinBox").classList.add("on");
+      $("#joinCopy").onclick=async()=>{
+        const t=$("#joinCode"); t.select();
+        try{ await navigator.clipboard.writeText(answer); $("#joinCopy").textContent="Copied"; }
+        catch(e){ try{ document.execCommand("copy"); $("#joinCopy").textContent="Copied"; }
+                  catch(x){ $("#joinCopy").textContent="Select it and copy"; } }
+      };
+      b.disabled=false; b.className=""; b.textContent="Or AirDrop the link";
+      b.onclick=async()=>{
+        try{
+          if(navigator.share) await navigator.share({title:"Brag reply – "+(p.n||""),url});
+          else prompt("Send this reply back to the dealer:",url);
+        }catch(e){}
+      };
+    };
+  } else if(p&&p.a){                // a reply arriving on the dealer's device
+    $("#gate").classList.remove("on"); $("#relay").classList.add("on");
+    const seat=+(p.s||0), payload={seat,sdp:p.a,at:Date.now()};
+    $("#relayH").textContent="Passing the reply over\u2026";
+    $("#relayP").textContent="Hold on.";
+    let acked=false;
+    const good=()=>{
+      if(acked) return; acked=true;
+      $("#relayH").textContent="That one is in";
+      $("#relayP").textContent="Close this tab and go back to the game \u2014 the seat is connected.";
+    };
+    let ch=null;
+    try{
+      ch=new BroadcastChannel("brag46");
+      ch.onmessage=e=>{ if(e.data&&e.data.t==="ack"&&e.data.seat===seat) good(); };
+      ch.postMessage({t:"answer",...payload});
+    }catch(e){}
+    try{ localStorage.setItem("brag.reply",JSON.stringify(payload)); }catch(e){}
+    const poll=setInterval(()=>{
+      try{
+        const a=JSON.parse(localStorage.getItem("brag.ack")||"null");
+        if(a&&a.seat===seat&&a.at>=payload.at-2000) good();
+      }catch(e){}
+    },300);
+    setTimeout(()=>{
+      clearInterval(poll);
+      if(acked) return;
+      $("#relayH").textContent="Pass this across by hand";
+      $("#relayP").textContent="This page could not reach the table on its own \u2014 that happens when the game is open in a different browser or tab.";
+      $("#relayCode").value=p.a;
+      $("#relayBox").classList.add("on");
+    },3500);
+    $("#relayCopy").onclick=async()=>{
+      const t=$("#relayCode"); t.select();
+      try{ await navigator.clipboard.writeText(p.a); $("#relayCopy").textContent="Copied"; }
+      catch(e){ try{ document.execCommand("copy"); $("#relayCopy").textContent="Copied"; }
+                catch(x){ $("#relayCopy").textContent="Select it and copy"; } }
+    };
+  }
+})();
+$("#joinReport").onclick=e=>copyReport(e.target);
+$("#joinReal").onclick=async e=>{
+  e.target.textContent="Asking\u2026";
+  const got=await useRealAddresses();
+  e.target.textContent = got
+    ? "On \u2014 tap Join the table again"
+    : "Microphone refused \u2014 still hidden";
+  if(got){
+    const b=$("#bePlayer"); b.className="primary"; b.textContent="Join the table";
+    const p=hashParams();
+    if(p&&p.o) b.onclick=()=>location.reload();
+  }
+};
+document.addEventListener("gesturestart",e=>e.preventDefault());
+</script>
+<script data-goatcounter="https://s77ffy.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
