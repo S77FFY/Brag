@@ -4,14 +4,14 @@
   Copyright (c) 2026 Ben Stiff @ Room46.uk. All rights reserved.
   No copying, redistribution or rehosting without permission.
   Card graphics carried over from the Noms project.
-  HO·Ben Stiff @ Room46.uk·0.2.4·2026-11-23·bg7d2f
+  HO·Ben Stiff @ Room46.uk·0.2.5·2026-11-23·bg7d2f
 -->
-<html lang="en" data-build="HO·Ben Stiff @ Room46.uk·0.2.4·2026-11-23·bg7d2f">
+<html lang="en" data-build="HO·Ben Stiff @ Room46.uk·0.2.5·2026-11-23·bg7d2f">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="app-repo" content="Brag">
-<meta name="app-version" content="0.2.4">
+<meta name="app-version" content="0.2.5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#05070f">
@@ -105,6 +105,9 @@ button[disabled]{opacity:.32}
 .round u{text-decoration:none;border-bottom:1px dotted var(--line)}
 .step{display:flex;gap:10px;align-items:baseline;margin-top:12px;font-size:15px}
 .step b{color:var(--gold);font-weight:400;font-size:13px;font-family:ui-monospace,Menlo,monospace}
+.pastemsg{margin-top:8px;font:400 13.5px/1.45 Georgia,serif;color:var(--turn);min-height:0}
+.pastemsg.good{color:var(--gold-hi)}
+.pastemsg:empty{display:none}
 .rule{height:1px;background:var(--line);margin:12px 0 0}
 .scroller{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 18px 8px;min-height:0}
 .boardlbl{font:400 11px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);letter-spacing:.1em;margin-bottom:9px}
@@ -129,6 +132,7 @@ button[disabled]{opacity:.32}
 .card.pickable{cursor:pointer;box-shadow:0 0 0 2px var(--turn),0 4px 12px rgba(0,0,0,.5)}
 .card.justtook{box-shadow:0 0 0 2px var(--gold),0 4px 12px rgba(0,0,0,.5)}
 .diag{font:400 11px/1.5 ui-monospace,Menlo,monospace;color:var(--bone-dim);opacity:.85;margin-top:8px}
+.diag.warn{color:var(--turn);opacity:1;font-family:Georgia,serif;font-size:12.5px;line-height:1.45;max-width:30ch}
 .hand-name{font:400 13px/1.5 Georgia,serif;color:var(--bone);margin-top:8px;min-height:1.5em}
 .seat.won .hand-name{color:var(--gold-hi)}
 .tip{color:var(--bone-dim);font-size:13px;max-width:54ch;padding-top:14px}
@@ -233,6 +237,7 @@ body.handview .stamp,body.hostview .stamp{display:none}
       <div class="round" id="roundLbl">hand 0</div>
     </div>
     <div class="step"><b id="stepNo">1</b><span id="stepTxt"></span></div>
+    <div class="pastemsg" id="pasteMsg"></div>
     <div class="rule"></div>
   </div>
   <div class="scroller">
@@ -246,6 +251,7 @@ body.handview .stamp,body.hostview .stamp{display:none}
   <div class="controls">
     <button id="addSeat">Invite a player</button>
     <button id="pasteReply" style="display:none">Paste a reply</button>
+    <button id="hostReal" style="display:none">Fix the connection</button>
     <button id="hostReport" style="display:none">Copy connection report</button>
     <button class="primary" id="deal">Deal</button>
   </div>
@@ -253,7 +259,7 @@ body.handview .stamp,body.hostview .stamp{display:none}
 
 <section id="hand" class="screen">
   <div class="topbar">
-    <div class="hcredit" id="hCredit">&copy; 2026 Ben Stiff @ Room46.uk &middot; v0.2.4</div>
+    <div class="hcredit" id="hCredit">&copy; 2026 Ben Stiff @ Room46.uk &middot; v0.2.5</div>
     <div class="whose" id="whose">waiting for the deal</div>
     <div class="tablerow" id="tablerow"></div>
   </div>
@@ -272,14 +278,14 @@ body.handview .stamp,body.hostview .stamp{display:none}
   </div>
 </section>
 
-<div class="stamp" id="stamp">v0.2.4</div>
+<div class="stamp" id="stamp">v0.2.5</div>
 <div class="gatecredit" id="gateCredit">&copy; 2026 Ben Stiff @ Room46.uk</div>
 <div id="dbg"></div>
 
 <script>
 "use strict";
-const VERSION="0.2.4";
-const BUILD="HO·Ben Stiff @ Room46.uk·0.2.4·2026-11-22·bg7d2f";
+const VERSION="0.2.5";
+const BUILD="HO·Ben Stiff @ Room46.uk·0.2.5·2026-11-22·bg7d2f";
 const LOCK_HOST="";   // e.g. "s77ffy.github.io" — empty means no lock
 const HOME_URL ="";   // e.g. "https://s77ffy.github.io/Brag/"
 (function lock(){
@@ -445,18 +451,47 @@ function unpackSDP(packed,type){
   }
   return {type, sdp:L.join("\r\n")+"\r\n"};
 }
-const ICE=[{urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]},
-           {urls:"stun:stun.cloudflare.com:3478"}];
+// A relay is the one thing that connects any two devices anywhere, at the cost
+// of depending on somebody's server. Left empty: fill these in only if you want
+// that safety net.
+const TURN_URL="", TURN_USER="", TURN_PASS="";
+function iceServers(){
+  const list=[{urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]},
+              {urls:"stun:stun.cloudflare.com:3478"}];
+  if(TURN_URL) list.push({urls:TURN_URL,username:TURN_USER,credential:TURN_PASS});
+  return list;
+}
+const ICE=iceServers();
 // Browsers hide a device's real address behind an mDNS ".local" name until the
 // page has been granted a microphone or camera. Where those names will not
 // resolve between two devices, that hiding is what stops them ever meeting.
 let REALADDR=false;
+try{ REALADDR = localStorage.getItem("brag.realaddr")==="1"; }catch(e){}
 async function useRealAddresses(){
   try{
     const st=await navigator.mediaDevices.getUserMedia({audio:true});
     st.getTracks().forEach(t=>t.stop());      // nothing is recorded or kept
-    REALADDR=true; return true;
+    REALADDR=true;
+    try{ localStorage.setItem("brag.realaddr","1"); }catch(e){}
+    return true;
   }catch(e){ return false; }
+}
+// Re-ask on load once granted, so the real addresses keep showing up.
+async function primeRealAddresses(){
+  if(!REALADDR) return;
+  try{
+    const st=await navigator.mediaDevices.getUserMedia({audio:true});
+    st.getTracks().forEach(t=>t.stop());
+  }catch(e){ REALADDR=false; }
+}
+// Two devices behind one router cannot reach each other on their public
+// address, and hidden .local names often will not resolve. Real addresses fix
+// both. This spots that situation and says so.
+function stuckOnAddresses(mine,theirs,ice){
+  if(REALADDR) return false;
+  if(!mine||!theirs) return false;
+  const bad = ice==="checking"||ice==="failed"||ice==="disconnected"||ice==="new";
+  return bad && mine.lan===0 && theirs.lan===0;
 }
 // Wait for candidates properly. iOS hides local addresses behind mDNS and
 // takes its time, so a flat short timeout can ship an empty answer that
@@ -546,6 +581,7 @@ function hostBoot(){
     pushAll();
   };
   listenForReplies();
+  primeRealAddresses();
   render();
 }
 function rnd12(){ const a=new Uint8Array(8); crypto.getRandomValues(a); return [...a].map(b=>b.toString(16).padStart(2,"0")).join(""); }
@@ -559,7 +595,7 @@ async function inviteSeat(i){
   const pc=new RTCPeerConnection({iceServers:ICE});
   const dc=pc.createDataChannel("brag",{ordered:true});
   LINKS[i]={pc,dc,state:"offering"};
-  dc.onopen=()=>{ LINKS[i].state="open"; render(); push(i); };
+  dc.onopen=()=>{ LINKS[i].state="open"; pasteSay(H.seats[i].n+" is in.",true); render(); push(i); };
   dc.onclose=()=>{ LINKS[i].state="closed"; render(); };
   dc.onmessage=e=>onPlayerMsg(i,e.data);
   pc.oniceconnectionstatechange=()=>{ LINKS[i].ice=pc.iceConnectionState; render(); };
@@ -586,18 +622,19 @@ async function inviteSeat(i){
 }
 async function takeAnswer(i,packed){
   const L=LINKS[i];
-  if(!L||!L.pc) return;
+  if(!L||!L.pc) return {error:"that seat has no invite open"};
   // the reply reaches us by broadcast AND by storage; claim it once, before
   // the await, or the loser of the race reports a failure over a good link
-  if(L.claimed===packed) return;
-  if(L.claimed) return;
-  if(L.pc.signalingState!=="have-local-offer") return;
+  if(L.claimed===packed) return {already:true};
+  if(L.claimed) return {already:true};
+  if(L.pc.signalingState!=="have-local-offer")
+    return {error:"that invite is no longer open ("+L.pc.signalingState+")"};
   L.claimed=packed;
   try{ if(H.ch) H.ch.postMessage({t:"ack",seat:i}); }catch(e){}
   try{ localStorage.setItem("brag.ack",JSON.stringify({seat:i,at:Date.now()})); }catch(e){}
   L.theirs=candKinds(packed);
-  try{ await L.pc.setRemoteDescription(unpackSDP(packed,"answer")); L.state="joining"; render(); }
-  catch(e){ L.claimed=null; L.state="bad reply"; render(); }
+  try{ await L.pc.setRemoteDescription(unpackSDP(packed,"answer")); L.state="joining"; render(); return {ok:true}; }
+  catch(e){ L.claimed=null; L.state="bad reply"; render(); return {error:(e&&e.message)||"unreadable"}; }
 }
 function listenForReplies(){
   const apply=(seat,sdp)=>takeAnswer(+seat,sdp);
@@ -733,6 +770,11 @@ function render(){
       if(L.theirs) bits.push("their phone: "+kindText(L.theirs));
       if(L.ice)    bits.push("link: "+L.ice);
       if(bits.length){ const dg=el("div","diag"); dg.textContent=bits.join(" \u00b7 "); d.appendChild(dg); }
+      if(stuckOnAddresses(L.mine,L.theirs,L.ice)){
+        const w=el("div","diag warn");
+        w.textContent="Both devices are hiding their address, so neither can find the other on your wi-fi. Tap Fix the connection on this device and on their phone.";
+        d.appendChild(w);
+      }
     }
     const hn=el("div","hand-name");
     if(G&&G.done) hn.textContent=rankHand(G.hands[i]).name;
@@ -760,7 +802,7 @@ function renderStep(){
   if(!anyOpen){
     const waitingFor=H.seats.find((s,i)=>!s.local&&LINKS[i]&&!LINKS[i].claimed);
     t = waitingFor
-      ? "Waiting on "+waitingFor.n+". On their phone: tap Join the table, then Copy my reply. Get that code to this device, then tap Paste a reply."
+      ? "Waiting on "+waitingFor.n+". On their phone: Join the table, then Copy my reply. Bring that code here and tap Paste a reply. If you AirDropped it instead, open Safari's tab list and tap the new tab \u2014 it only hands the reply over once you look at it."
       : "You are in as "+H.seats[0].n+". Tap Invite a player and send the link to their phone.";
   } else if(!G){
     n=2; t="Everyone connected? Deal. Each phone gets three cards and the table gets three, two down and one up.";
@@ -786,6 +828,9 @@ function renderStep(){
   $("#pasteReply").style.display = waiting ? "" : "none";
   const stuck=H.seats.some((s,i)=>!s.local&&LINKS[i]&&LINKS[i].state!=="open");
   $("#hostReport").style.display = stuck ? "" : "none";
+  const addrTrouble=H.seats.some((s,i)=>!s.local&&LINKS[i]&&LINKS[i].state!=="open"
+                      && stuckOnAddresses(LINKS[i].mine,LINKS[i].theirs,LINKS[i].ice));
+  $("#hostReal").style.display = (addrTrouble || (stuck && !REALADDR)) ? "" : "none";
   const full=H.seats.length>=MAXSEATS;
   $("#addSeat").disabled=full;
   $("#addSeat").textContent = full ? "Table full (10)" : "Invite a player ("+H.seats.length+"/10)";
@@ -846,21 +891,54 @@ function parseReply(txt){
   if(t.indexOf("~")>0) return { sdp:t, seat:null };     // a bare code
   return null;
 }
+function pasteSay(t,good){
+  const e=$("#pasteMsg"); e.textContent=t||""; e.classList.toggle("good",!!good);
+}
 async function pasteReply(){
-  let txt="";
-  try{ txt=await navigator.clipboard.readText(); }catch(e){}
-  if(!txt) txt=prompt("Paste the reply from the player's phone:","")||"";
+  pasteSay("");
+  let txt="", why="";
+  try{ txt=await navigator.clipboard.readText(); }catch(e){ why=e&&e.name||"blocked"; }
+  if(!txt){
+    txt=prompt("Paste the reply from the player's phone:","")||"";
+    if(!txt){
+      pasteSay("Nothing was pasted"+(why?" (clipboard "+why+")":"")+". Copy the code on their phone first, then tap this again.");
+      return;
+    }
+  }
   const r=parseReply(txt);
-  if(!r){ alert("That did not look like a reply. Copy the whole code from the player's phone."); return; }
+  if(!r){
+    pasteSay("That is not a reply code \u2014 it should be a long line with ~ in it. What was pasted started: \u201c"
+             +txt.trim().slice(0,24)+"\u2026\u201d");
+    return;
+  }
   let seat=r.seat;
   if(seat==null || !LINKS[seat] || LINKS[seat].claimed){
     seat=H.seats.findIndex((s,i)=>!s.local && LINKS[i] && !LINKS[i].claimed);
   }
-  if(seat<0 || !LINKS[seat]){ alert("No seat is waiting for a reply. Press Invite a player first."); return; }
-  await takeAnswer(seat, r.sdp);
+  if(seat<0 || !LINKS[seat]){
+    const anyOpen=H.seats.some((s,i)=>!s.local&&LINKS[i]&&LINKS[i].state==="open");
+    pasteSay(anyOpen ? "That seat is already connected. Tap Invite a player for the next one."
+                     : "No seat is waiting. Tap Invite a player first, send that link, and try again.");
+    return;
+  }
+  pasteSay("Reply taken for "+H.seats[seat].n+" \u2014 connecting\u2026", true);
+  const res=await takeAnswer(seat, r.sdp);
+  if(res && res.error) pasteSay("That reply would not load: "+res.error+". Ask for a fresh one.");
 }
 $("#pasteReply").onclick=pasteReply;
 $("#hostReport").onclick=e=>copyReport(e.target);
+$("#hostReal").onclick=async e=>{
+  const b=e.target, was=b.textContent;
+  b.textContent="Asking\u2026"; b.disabled=true;
+  const got=await useRealAddresses();
+  b.disabled=false;
+  if(!got){ b.textContent="Microphone refused"; setTimeout(()=>b.textContent=was,2500); render(); return; }
+  b.textContent="Re-inviting\u2026";
+  // the old offers were gathered with addresses hidden, so start them again
+  const again=H.seats.map((s,i)=>i).filter(i=>!H.seats[i].local && LINKS[i] && LINKS[i].state!=="open");
+  for(const i of again){ await inviteSeat(i); }
+  b.textContent=was; render();
+};
 $("#deal").onclick=()=>{
   H.round++; H.taken=null; H.knockWith=false;
   H.G=newHand(H.seed,H.round,H.seats.length,H.knockRule);
