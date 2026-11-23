@@ -4,14 +4,14 @@
   Copyright (c) 2026 Ben Stiff @ Room46.uk. All rights reserved.
   No copying, redistribution or rehosting without permission.
   Card graphics carried over from the Noms project.
-  HO·Ben Stiff @ Room46.uk·0.2.3·2026-11-23·bg7d2f
+  HO·Ben Stiff @ Room46.uk·0.2.4·2026-11-23·bg7d2f
 -->
-<html lang="en" data-build="HO·Ben Stiff @ Room46.uk·0.2.3·2026-11-23·bg7d2f">
+<html lang="en" data-build="HO·Ben Stiff @ Room46.uk·0.2.4·2026-11-23·bg7d2f">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="app-repo" content="Brag">
-<meta name="app-version" content="0.2.3">
+<meta name="app-version" content="0.2.4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#05070f">
@@ -128,6 +128,7 @@ button[disabled]{opacity:.32}
 .seatnote{font:400 12px/1.3 Georgia,serif;color:var(--turn);opacity:.85}
 .card.pickable{cursor:pointer;box-shadow:0 0 0 2px var(--turn),0 4px 12px rgba(0,0,0,.5)}
 .card.justtook{box-shadow:0 0 0 2px var(--gold),0 4px 12px rgba(0,0,0,.5)}
+.diag{font:400 11px/1.5 ui-monospace,Menlo,monospace;color:var(--bone-dim);opacity:.85;margin-top:8px}
 .hand-name{font:400 13px/1.5 Georgia,serif;color:var(--bone);margin-top:8px;min-height:1.5em}
 .seat.won .hand-name{color:var(--gold-hi)}
 .tip{color:var(--bone-dim);font-size:13px;max-width:54ch;padding-top:14px}
@@ -210,10 +211,13 @@ body.handview .stamp,body.hostview .stamp{display:none}
   <div class="suits">&#9824;<span class="r">&#9829;</span><span class="r">&#9830;</span>&#9827;</div>
   <p id="gateMsg">Pick this device's job. One deals, the rest are hands.</p>
   <div class="net" id="joinStep" style="min-height:1.2em"></div>
+  <div class="net" id="joinStep2" style="min-height:1.2em"></div>
   <div class="codebox" id="joinBox">
     <textarea class="code" id="joinCode" readonly></textarea>
     <button class="primary" id="joinCopy">Copy my reply</button>
     <div class="codehint">On the dealer's own device, copy is enough — the clipboard follows you across Apple devices. Otherwise message it over. Then they tap <b>Paste a reply</b>.</div>
+    <button id="joinReal">Connection trouble? Tap here</button>
+    <button id="joinReport">Copy connection report</button>
   </div>
   <div class="roles">
     <button class="primary" id="beHost">Deal from this device</button>
@@ -242,13 +246,14 @@ body.handview .stamp,body.hostview .stamp{display:none}
   <div class="controls">
     <button id="addSeat">Invite a player</button>
     <button id="pasteReply" style="display:none">Paste a reply</button>
+    <button id="hostReport" style="display:none">Copy connection report</button>
     <button class="primary" id="deal">Deal</button>
   </div>
 </section>
 
 <section id="hand" class="screen">
   <div class="topbar">
-    <div class="hcredit" id="hCredit">&copy; 2026 Ben Stiff @ Room46.uk &middot; v0.2.3</div>
+    <div class="hcredit" id="hCredit">&copy; 2026 Ben Stiff @ Room46.uk &middot; v0.2.4</div>
     <div class="whose" id="whose">waiting for the deal</div>
     <div class="tablerow" id="tablerow"></div>
   </div>
@@ -267,14 +272,14 @@ body.handview .stamp,body.hostview .stamp{display:none}
   </div>
 </section>
 
-<div class="stamp" id="stamp">v0.2.3</div>
+<div class="stamp" id="stamp">v0.2.4</div>
 <div class="gatecredit" id="gateCredit">&copy; 2026 Ben Stiff @ Room46.uk</div>
 <div id="dbg"></div>
 
 <script>
 "use strict";
-const VERSION="0.2.3";
-const BUILD="HO·Ben Stiff @ Room46.uk·0.2.3·2026-11-22·bg7d2f";
+const VERSION="0.2.4";
+const BUILD="HO·Ben Stiff @ Room46.uk·0.2.4·2026-11-22·bg7d2f";
 const LOCK_HOST="";   // e.g. "s77ffy.github.io" — empty means no lock
 const HOME_URL ="";   // e.g. "https://s77ffy.github.io/Brag/"
 (function lock(){
@@ -287,6 +292,11 @@ const HOME_URL ="";   // e.g. "https://s77ffy.github.io/Brag/"
 
 const $=s=>document.querySelector(s);
 function step(t){ const e=document.querySelector("#joinStep"); if(e) e.textContent=t; }
+function step2(){
+  const e=document.querySelector("#joinStep2"); if(!e) return;
+  const pc=P.pc; if(!pc) return;
+  e.textContent="link: "+pc.iceConnectionState+" / "+pc.connectionState;
+}
 const el=(t,c)=>{const e=document.createElement(t); if(c)e.className=c; return e;};
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const SUIT=["♠","♥","♦","♣"];
@@ -435,30 +445,66 @@ function unpackSDP(packed,type){
   }
   return {type, sdp:L.join("\r\n")+"\r\n"};
 }
-const ICE=[{urls:"stun:stun.l.google.com:19302"}];
+const ICE=[{urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]},
+           {urls:"stun:stun.cloudflare.com:3478"}];
+// Browsers hide a device's real address behind an mDNS ".local" name until the
+// page has been granted a microphone or camera. Where those names will not
+// resolve between two devices, that hiding is what stops them ever meeting.
+let REALADDR=false;
+async function useRealAddresses(){
+  try{
+    const st=await navigator.mediaDevices.getUserMedia({audio:true});
+    st.getTracks().forEach(t=>t.stop());      // nothing is recorded or kept
+    REALADDR=true; return true;
+  }catch(e){ return false; }
+}
 // Wait for candidates properly. iOS hides local addresses behind mDNS and
 // takes its time, so a flat short timeout can ship an empty answer that
 // silently never connects.
 function gathered(pc, onTick){
   return new Promise(r=>{
-    let seen=0, started=Date.now(), done=false;
+    let seen=0, relayed=0, started=Date.now(), done=false;
     const finish=()=>{ if(done) return; done=true; clearInterval(iv); r(seen); };
     pc.addEventListener("icecandidate",e=>{
-      if(e.candidate && e.candidate.candidate){ seen++; if(onTick) onTick(seen); }
+      if(e.candidate && e.candidate.candidate){
+        seen++;
+        if(/ typ (srflx|relay)/.test(e.candidate.candidate)) relayed++;
+        if(onTick) onTick(seen,relayed);
+      }
       if(!e.candidate) finish();                       // gathering finished
     });
     const iv=setInterval(()=>{
       const ms=Date.now()-started;
       if(pc.iceGatheringState==="complete") return finish();
-      if(seen>0 && ms>2200) return finish();           // enough to connect on a LAN
-      if(ms>9000) return finish();                     // give up waiting
+      // a route via a stun server is worth waiting for: hidden .local names do
+      // not always resolve between two devices on the same wi-fi
+      if(relayed>0 && ms>1200) return finish();
+      if(seen>0 && ms>5000) return finish();
+      if(ms>9000) return finish();
     },200);
     if(pc.iceGatheringState==="complete") finish();
   });
 }
 function countCands(packed){
-  const c=(packed.split("~")[4]||"").split(",").filter(Boolean);
-  return c.length;
+  return (packed.split("~")[4]||"").split(",").filter(Boolean).length;
+}
+function candKinds(packed){
+  const list=(packed.split("~")[4]||"").split(",").filter(Boolean);
+  let mdns=0, lan=0, pub=0;
+  for(const c of list){
+    if(c.endsWith("!s")) pub++;
+    else if(/\.local:/.test(c)) mdns++;
+    else lan++;
+  }
+  return {n:list.length, mdns, lan, pub};
+}
+function kindText(k){
+  if(!k || !k.n) return "no routes";
+  const bits=[];
+  if(k.mdns) bits.push(k.mdns+" hidden local");
+  if(k.lan)  bits.push(k.lan+" local");
+  if(k.pub)  bits.push(k.pub+" via stun");
+  return bits.join(", ");
 }
 
 /* ===================== storage ===================== */
@@ -516,17 +562,23 @@ async function inviteSeat(i){
   dc.onopen=()=>{ LINKS[i].state="open"; render(); push(i); };
   dc.onclose=()=>{ LINKS[i].state="closed"; render(); };
   dc.onmessage=e=>onPlayerMsg(i,e.data);
+  pc.oniceconnectionstatechange=()=>{ LINKS[i].ice=pc.iceConnectionState; render(); };
   pc.onconnectionstatechange=()=>{
     const st=pc.connectionState;
-    if(st==="failed"||st==="disconnected"){ LINKS[i].state=st; render(); }
+    LINKS[i].conn=st;
+    if(st==="failed"||st==="disconnected") LINKS[i].state=st;
+    render();
   };
+  LINKS[i].state="looking for a route"; render();
   await pc.setLocalDescription(await pc.createOffer());
   await gathered(pc);
   const packed=packSDP(pc.localDescription.sdp);
-  if(countCands(packed)===0){ LINKS[i].state="no network"; render(); }
+  LINKS[i].mine=candKinds(packed);
   const base=location.href.split("#")[0];
   const url=`${base}#s=${i}&n=${encodeURIComponent(seat.n)}&o=${encodeURIComponent(packed)}`;
-  seat.sent=true; LINKS[i].state="waiting"; render();
+  seat.sent=true;
+  LINKS[i].state = LINKS[i].mine.n===0 ? "this device found no route" : "waiting";
+  render();
   try{
     if(navigator.share) await navigator.share({title:"Brag – "+seat.n,url});
     else prompt("AirDrop or send this link to the player:",url);
@@ -543,6 +595,7 @@ async function takeAnswer(i,packed){
   L.claimed=packed;
   try{ if(H.ch) H.ch.postMessage({t:"ack",seat:i}); }catch(e){}
   try{ localStorage.setItem("brag.ack",JSON.stringify({seat:i,at:Date.now()})); }catch(e){}
+  L.theirs=candKinds(packed);
   try{ await L.pc.setRemoteDescription(unpackSDP(packed,"answer")); L.state="joining"; render(); }
   catch(e){ L.claimed=null; L.state="bad reply"; render(); }
 }
@@ -674,6 +727,13 @@ function render(){
       act.appendChild(note);
       d.appendChild(act);
     }
+    if(!s.local && L && L.state!=="open"){
+      const bits=[];
+      if(L.mine)   bits.push("this device: "+kindText(L.mine));
+      if(L.theirs) bits.push("their phone: "+kindText(L.theirs));
+      if(L.ice)    bits.push("link: "+L.ice);
+      if(bits.length){ const dg=el("div","diag"); dg.textContent=bits.join(" \u00b7 "); d.appendChild(dg); }
+    }
     const hn=el("div","hand-name");
     if(G&&G.done) hn.textContent=rankHand(G.hands[i]).name;
     else if(G&&s.local) hn.textContent="your hand \u2014 keep this device to yourself";
@@ -724,6 +784,8 @@ function renderStep(){
   $("#deal").disabled=!anyOpen;
   const waiting=H.seats.some((s,i)=>!s.local && LINKS[i] && !LINKS[i].claimed);
   $("#pasteReply").style.display = waiting ? "" : "none";
+  const stuck=H.seats.some((s,i)=>!s.local&&LINKS[i]&&LINKS[i].state!=="open");
+  $("#hostReport").style.display = stuck ? "" : "none";
   const full=H.seats.length>=MAXSEATS;
   $("#addSeat").disabled=full;
   $("#addSeat").textContent = full ? "Table full (10)" : "Invite a player ("+H.seats.length+"/10)";
@@ -741,6 +803,38 @@ $("#addSeat").onclick=async()=>{
   saveHost(); render();
   await inviteSeat(i);
 };
+function netReport(){
+  const L=[];
+  const host=document.body.classList.contains("hostview");
+  L.push("Brag v"+VERSION+" connection report");
+  L.push("when: "+new Date().toISOString());
+  L.push("role: "+(host?"dealer":"player"));
+  L.push("real addresses: "+(REALADDR?"on":"off"));
+  L.push("page: "+location.href.split("#")[0]);
+  L.push("browser: "+navigator.userAgent);
+  if(host){
+    H.seats.forEach((s,i)=>{
+      const k=LINKS[i];
+      if(s.local) return L.push("seat "+i+" "+s.n+": this device");
+      if(!k)      return L.push("seat "+i+" "+s.n+": not invited");
+      L.push("seat "+i+" "+s.n+": state="+k.state+" ice="+(k.ice||"-")+" conn="+(k.conn||"-")
+        +" | mine="+kindText(k.mine)+" | theirs="+kindText(k.theirs)
+        +" | reply="+(k.claimed?"taken":"none"));
+    });
+  } else {
+    L.push("seat: "+P.seat+" ("+P.name+")");
+    L.push("net="+P.net+" ice="+(P.pc?P.pc.iceConnectionState:"-")+" conn="+(P.pc?P.pc.connectionState:"-"));
+    L.push("mine="+kindText(P.mine)+" | theirs="+kindText(P.theirs));
+    L.push("dealt: "+(P.S&&P.S.you?"yes":"no"));
+  }
+  return L.join("\n");
+}
+async function copyReport(btn){
+  const txt=netReport(), was="Copy connection report";
+  try{ await navigator.clipboard.writeText(txt); btn.textContent="Report copied"; }
+  catch(e){ prompt("Copy this and send it on:", txt); }
+  setTimeout(()=>{ btn.textContent=was; },2500);
+}
 function parseReply(txt){
   if(!txt) return null;
   const t=txt.trim();
@@ -766,6 +860,7 @@ async function pasteReply(){
   await takeAnswer(seat, r.sdp);
 }
 $("#pasteReply").onclick=pasteReply;
+$("#hostReport").onclick=e=>copyReport(e.target);
 $("#deal").onclick=()=>{
   H.round++; H.taken=null; H.knockWith=false;
   H.G=newHand(H.seed,H.round,H.seats.length,H.knockRule);
@@ -805,9 +900,12 @@ async function joinTable(packedOffer, seat, name){
       if(m.t==="state"){ P.S=m; P.taken=null; P.knockWith=false; P.name=m.names[m.seat]||P.name; drawHand(); }
     };
   };
+  pc.oniceconnectionstatechange=()=>{ step2(); drawHand(); };
   pc.onconnectionstatechange=()=>{
-    if(pc.connectionState==="failed"){ P.net="failed"; drawHand(); }
+    if(pc.connectionState==="failed"){ P.net="failed"; }
+    step2(); drawHand();
   };
+  P.theirs=candKinds(packedOffer);
   step("Reading the invite");
   await pc.setRemoteDescription(unpackSDP(packedOffer,"offer"));
   step("Making your reply");
@@ -815,9 +913,9 @@ async function joinTable(packedOffer, seat, name){
   step("Finding a route to the table");
   await gathered(pc, n=>step("Finding a route to the table \u2014 "+n+" found"));
   const packed=packSDP(pc.localDescription.sdp);
-  const n=countCands(packed);
-  if(n===0) throw new Error("This phone found no way to reach the table. Check it is on the same wi-fi as the dealer, not mobile data.");
-  step(n+" route"+(n===1?"":"s")+" found");
+  P.mine=candKinds(packed);
+  if(P.mine.n===0) throw new Error("This phone found no way to reach the table. Check it is on the same wi-fi as the dealer, not mobile data.");
+  step("You: "+kindText(P.mine)+" \u00b7 table: "+kindText(P.theirs));
   return packed;
 }
 function send(o){ if(P.dc&&P.dc.readyState==="open"){ try{P.dc.send(JSON.stringify(o));}catch(e){} } }
@@ -1063,6 +1161,19 @@ $("#bePlayer").onclick=()=>{
     };
   }
 })();
+$("#joinReport").onclick=e=>copyReport(e.target);
+$("#joinReal").onclick=async e=>{
+  e.target.textContent="Asking\u2026";
+  const got=await useRealAddresses();
+  e.target.textContent = got
+    ? "On \u2014 tap Join the table again"
+    : "Microphone refused \u2014 still hidden";
+  if(got){
+    const b=$("#bePlayer"); b.className="primary"; b.textContent="Join the table";
+    const p=hashParams();
+    if(p&&p.o) b.onclick=()=>location.reload();
+  }
+};
 document.addEventListener("gesturestart",e=>e.preventDefault());
 </script>
 <script data-goatcounter="https://s77ffy.goatcounter.com/count"
