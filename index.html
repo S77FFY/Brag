@@ -4,14 +4,14 @@
   Copyright (c) 2026 Ben Stiff @ Room46.uk. All rights reserved.
   No copying, redistribution or rehosting without permission.
   Card graphics carried over from the Noms project.
-  HO·Ben Stiff @ Room46.uk·0.3.2·2026-11-27·bg7d2f
+  HO·Ben Stiff @ Room46.uk·0.3.3·2026-11-27·bg7d2f
 -->
-<html lang="en" data-build="HO·Ben Stiff @ Room46.uk·0.3.2·2026-11-27·bg7d2f">
+<html lang="en" data-build="HO·Ben Stiff @ Room46.uk·0.3.3·2026-11-27·bg7d2f">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="app-repo" content="Brag">
-<meta name="app-version" content="0.3.2">
+<meta name="app-version" content="0.3.3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#05070f">
@@ -196,6 +196,10 @@ button[disabled]{opacity:.32}
   border-radius:4px;padding:9px;font:11px/1.45 ui-monospace,Menlo,monospace;
   word-break:break-all;overflow:auto;-webkit-user-select:all;user-select:all;resize:none}
 .codehint{color:var(--bone-dim);font-size:13px;max-width:32ch}
+.joinwarn{display:none;max-width:32ch;margin:2px auto 0;padding:9px 11px;border-radius:4px;
+  border:1px solid var(--turn);color:var(--turn);font:400 13.5px/1.45 Georgia,serif}
+.joinwarn.on{display:block}
+#joinReal.urgent{background:var(--turn);border-color:var(--turn);color:#2a1f05;font-weight:700}
 #relay h2{font-weight:400;margin:0;font-size:26px}
 #relay p{color:var(--bone-dim);max-width:32ch;margin:0}
 .net{font:400 11px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);letter-spacing:.06em}
@@ -281,6 +285,7 @@ body.handview .stamp,body.hostview .stamp{display:none}
   <p id="gateMsg">Pick this device's job. One deals, the rest are hands.</p>
   <div class="net" id="joinStep" style="min-height:1.2em"></div>
   <div class="net" id="joinStep2" style="min-height:1.2em"></div>
+  <div class="joinwarn" id="joinWarn"></div>
   <div class="codebox" id="joinBox">
     <textarea class="code" id="joinCode" readonly></textarea>
     <button class="primary" id="joinCopy">Copy my reply</button>
@@ -334,7 +339,7 @@ body.handview .stamp,body.hostview .stamp{display:none}
   <div class="controls">
     <button id="addSeat">Invite a player</button>
     <button id="pasteReply" style="display:none">Paste a reply</button>
-    <button id="hostReal" style="display:none">Fix the connection</button>
+    <button id="hostReal" style="display:none">Send a fresh invite</button>
     <button id="hostReport" style="display:none">Copy connection report</button>
     <button class="primary" id="deal">Deal</button>
   </div>
@@ -342,7 +347,7 @@ body.handview .stamp,body.hostview .stamp{display:none}
 
 <section id="hand" class="screen">
   <div class="topbar">
-    <div class="hcredit" id="hCredit">&copy; 2026 Ben Stiff @ Room46.uk &middot; v0.3.2</div>
+    <div class="hcredit" id="hCredit">&copy; 2026 Ben Stiff @ Room46.uk &middot; v0.3.3</div>
     <div class="opps" id="opps"></div>
     <div class="whose" id="whose">waiting for the deal</div>
     <div class="tablerow" id="tablerow"></div>
@@ -365,14 +370,14 @@ body.handview .stamp,body.hostview .stamp{display:none}
   </div>
 </section>
 
-<div class="stamp" id="stamp">v0.3.2</div>
+<div class="stamp" id="stamp">v0.3.3</div>
 <div class="gatecredit" id="gateCredit">&copy; 2026 Ben Stiff @ Room46.uk</div>
 <div id="dbg"></div>
 
 <script>
 "use strict";
-const VERSION="0.3.2";
-const BUILD="HO·Ben Stiff @ Room46.uk·0.3.2·2026-11-22·bg7d2f";
+const VERSION="0.3.3";
+const BUILD="HO·Ben Stiff @ Room46.uk·0.3.3·2026-11-27·bg7d2f";
 const LOCK_HOST="";   // e.g. "s77ffy.github.io" — empty means no lock
 const HOME_URL ="";   // e.g. "https://s77ffy.github.io/Brag/"
 (function lock(){
@@ -865,8 +870,8 @@ function render(){
       if(stuckOnAddresses(L.mine,L.theirs,L.ice)){
         const w=el("div","diag warn");
         w.textContent = hidingHere(L.mine)
-          ? "This device is still hiding its address. Tap Fix the connection below, then invite them again."
-          : "Their phone is still hiding its address, so it cannot be found on your wi-fi. On their phone tap \u201cConnection trouble?\u201d, then open the new invite you send them.";
+          ? "This device is still hiding its address. Tap Fix the connection below to allow the microphone and send a fresh invite."
+          : "Their phone is hiding its address, so it cannot be found on your wi-fi. Tap Send a fresh invite \u2014 an invite can only be answered once, so they need a new link, not another go at the old one.";
         d.appendChild(w);
       }
     }
@@ -924,7 +929,8 @@ function renderStep(){
   $("#hostReport").style.display = stuck ? "" : "none";
   const addrTrouble=H.seats.some((s,i)=>!s.local&&LINKS[i]&&LINKS[i].state!=="open"
                       && stuckOnAddresses(LINKS[i].mine,LINKS[i].theirs,LINKS[i].ice));
-  $("#hostReal").style.display = (addrTrouble || (stuck && !REALADDR)) ? "" : "none";
+  $("#hostReal").style.display = stuck ? "" : "none";
+  $("#hostReal").textContent = REALADDR ? "Send a fresh invite" : "Fix the connection";
   const full=H.seats.length>=MAXSEATS;
   $("#addSeat").disabled=full;
   $("#addSeat").textContent = full ? "Table full (10)" : "Invite a player ("+H.seats.length+"/10)";
@@ -1565,8 +1571,25 @@ $("#bePlayer").onclick=()=>{
     $("#beHost").style.display="none";
     $("#gateMsg").textContent="You have been dealt in as "+(p.n||"a player")+".";
     const b=$("#bePlayer"); b.textContent="Join the table"; b.className="primary";
-    b.onclick=async()=>{
-      b.disabled=true; b.textContent="Connecting…";
+    // An invite can only be answered once. A second reply to the same invite
+    // gets ICE up and then leaves DTLS hanging for ever, so there is no second
+    // chance here: whatever this phone needs, it must have before it replies.
+    const theirKinds = candKinds(p.o);
+    async function doJoin(){
+      if(P.answered){ askForFreshInvite(); return; }
+      b.disabled=true; b.className="primary"; b.textContent="Connecting\u2026";
+      $("#joinWarn").classList.remove("on");
+      // The table can only be met on the wi-fi if both ends show a real
+      // address. If it is showing one and we would not, ask for the
+      // microphone now — afterwards is too late.
+      if(theirKinds.lan>0 && !REALADDR){
+        $("#joinWarn").innerHTML="The table is on your wi-fi. Allow the microphone so this phone shows its address too \u2014 nothing is recorded, it is the only way a browser will reveal it.";
+        $("#joinWarn").classList.add("on");
+        b.textContent="Allow the microphone\u2026";
+        await useRealAddresses();
+        $("#joinWarn").classList.remove("on");
+        b.textContent="Connecting\u2026";
+      }
       let answer;
       try{ answer=await joinTable(p.o, +(p.s||0), p.n||"Player"); }
       catch(e){
@@ -1574,11 +1597,13 @@ $("#bePlayer").onclick=()=>{
           : "That invite could not be read. Ask the dealer for a fresh one.";
         step(""); b.disabled=false; b.textContent="Try again"; return;
       }
+      P.answered=true;
       const base=location.href.split("#")[0];
       const url=`${base}#s=${p.s||0}&a=${encodeURIComponent(answer)}`;
       $("#gateMsg").textContent="Send your reply back to the dealer. You will be dealt in the moment they take it.";
       $("#joinCode").value=answer;
       $("#joinBox").classList.add("on");
+      $("#joinCopy").textContent="Copy my reply";
       $("#joinCopy").onclick=async()=>{
         const t=$("#joinCode"); t.select();
         try{ await navigator.clipboard.writeText(answer); $("#joinCopy").textContent="Copied"; }
@@ -1592,7 +1617,24 @@ $("#bePlayer").onclick=()=>{
           else prompt("Send this reply back to the dealer:",url);
         }catch(e){}
       };
-    };
+      // Two devices meet on the wi-fi only if both show a real address. Say so
+      // before the code is sent and everyone's time is wasted.
+      const hidingHere = P.mine && P.mine.n>0 && P.mine.lan===0;
+      const w=$("#joinWarn"), fix=$("#joinReal");
+      if(hidingHere && (P.theirs&&P.theirs.lan>0)){
+        w.innerHTML="This phone is still hiding its address while the table shows a real one, so this code will not connect. Ask the dealer to tap <b>Send a fresh invite</b> and open the new link.";
+        w.classList.add("on"); fix.classList.add("urgent");
+      } else {
+        fix.classList.remove("urgent");
+      }
+      fix.textContent = REALADDR ? "Real address on" : "Connection trouble? Tap here";
+    }
+    function askForFreshInvite(){
+      $("#joinWarn").innerHTML="An invite can only be answered once. Ask the dealer to tap <b>Send a fresh invite</b>, then open the new link they send you.";
+      $("#joinWarn").classList.add("on");
+    }
+    window.__askFresh=askForFreshInvite;
+    b.onclick=()=>doJoin();
   } else if(p&&p.a){                // a reply arriving on the dealer's device
     $("#gate").classList.remove("on"); $("#relay").classList.add("on");
     const seat=+(p.s||0), payload={seat,sdp:p.a,at:Date.now()};
@@ -1635,16 +1677,19 @@ $("#bePlayer").onclick=()=>{
 })();
 $("#joinReport").onclick=e=>copyReport(e.target);
 $("#joinReal").onclick=async e=>{
-  e.target.textContent="Asking\u2026";
+  const btn=e.target;
+  btn.textContent="Asking\u2026"; btn.disabled=true;
   const got=await useRealAddresses();
-  e.target.textContent = got
-    ? "On \u2014 tap Join the table again"
-    : "Microphone refused \u2014 still hidden";
-  if(got){
-    const b=$("#bePlayer"); b.className="primary"; b.textContent="Join the table";
-    const p=hashParams();
-    if(p&&p.o) b.onclick=()=>location.reload();
+  btn.disabled=false;
+  if(!got){
+    btn.textContent="Microphone refused";
+    $("#joinWarn").innerHTML="Without it this phone keeps its address private and the table cannot find it. Allow the microphone from Safari\u2019s <b>aA</b> menu, under Website Settings.";
+    $("#joinWarn").classList.add("on");
+    return;
   }
+  btn.classList.remove("urgent"); btn.textContent="Real address on";
+  // an invite cannot be answered twice, so this only helps on the next one
+  if(P.answered && window.__askFresh) window.__askFresh();
 };
 document.addEventListener("gesturestart",e=>e.preventDefault());
 </script>
