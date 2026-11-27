@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<!--
+  Brag — bastard brag across devices, no server
+  Copyright (c) 2026 Ben Stiff @ Room46.uk. All rights reserved.
+  No copying, redistribution or rehosting without permission.
+  Card graphics carried over from the Noms project.
+  HO·Ben Stiff @ Room46.uk·0.4.0·2026-11-27·bg7d2f
+-->
+<html lang="en" data-build="HO·Ben Stiff @ Room46.uk·0.4.0·2026-11-27·bg7d2f">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="app-repo" content="Brag">
+<meta name="app-version" content="0.4.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#05070f">
+<title>Brag</title>
+<style>
+/* palette carried over from Noms */
+:root{
+  --felt:#05070f; --felt2:#0d1430; --panel:#0c1226;
+  --purple:#a855f7; --purple-dk:#6d28d9;
+  --bone:#e9f2ff; --bone-dim:#8fa3c8; --paper:#f7f1df;
+  --gold:#22d3ee; --gold-hi:#8bf6ff; --gold-dk:#0b7f96;
+  --turn:#f2c96e; --turn-hi:#ffe9a8;
+  --line:rgba(139,246,255,.16);
+  --cw:96px; --tw:62px; --sink:40px;
+  --glow:0 0 24px rgba(34,211,238,.45);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
+body{
+  background:radial-gradient(120% 90% at 50% 0%, var(--felt2) 0%, var(--felt) 60%, #01020a 100%);
+  color:var(--bone);
+  font:16px/1.45 Georgia,"Iowan Old Style","Times New Roman",serif;
+  -webkit-user-select:none;user-select:none;touch-action:none;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+.screen{position:fixed;inset:0;display:none;flex-direction:column}
+.screen.on{display:flex}
+button{
+  font:inherit;color:var(--bone);background:transparent;
+  border:1px solid var(--line);border-radius:3px;padding:.7em 1.1em;cursor:pointer;
+}
+button:active{background:rgba(139,246,255,.09)}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+button.primary{background:var(--gold);border-color:var(--gold);color:#04212a;font-weight:700;box-shadow:var(--glow)}
+button.primary:active{background:var(--gold-dk);color:#dff9ff}
+button.knock{border-color:var(--turn);color:var(--turn);padding:.55em .95em}
+button.knock.armed{background:var(--turn);color:#2a1f05;font-weight:700}
+button[disabled]{opacity:.32}
+.mono{font-family:ui-monospace,Menlo,monospace}
+
+/* ---------------- cards (from Noms) ---------------- */
+.card{
+  position:relative;width:var(--cw);height:calc(var(--cw)*1.4);border-radius:9%;
+  background:#fbf7ec;border:1px solid #cfc2a4;color:#221b26;
+  box-shadow:0 2px 6px rgba(0,0,0,.45);flex:none;user-select:none;
+  font-size:var(--cw);
+}
+.card.red{color:#c0392b}
+.corner{position:absolute;top:4%;left:6%;text-align:center;line-height:1.02}
+.corner b{display:block;font-family:Georgia,serif;font-size:.21em;font-weight:700}
+.corner i{display:block;font-style:normal;font-size:.17em}
+.corner.br{top:auto;left:auto;bottom:4%;right:6%;transform:rotate(180deg)}
+.pip{position:absolute;transform:translate(-50%,-50%);font-size:.22em;line-height:1}
+.pip.f{transform:translate(-50%,-50%) rotate(180deg)}
+.apip{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:.52em;line-height:1}
+.apip.asp{font-size:.66em;text-shadow:0 0 1px #221b26}
+.court{position:absolute;inset:16% 18%;border:2px double currentColor;border-radius:8%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2%}
+.court .cl{font-family:Georgia,serif;font-size:.4em;font-weight:700;line-height:1}
+.court .cs{font-size:.2em;line-height:1}
+.card.back{
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,.28) 0 5.5%, rgba(255,255,255,0) 6.5%),
+    repeating-linear-gradient(45deg, rgba(139,246,255,.20) 0 1.5px, transparent 1.5px 7px),
+    repeating-linear-gradient(-45deg, rgba(139,246,255,.20) 0 1.5px, transparent 1.5px 7px),
+    linear-gradient(155deg,#7b3ff2,#1b2ea8);
+  border:2px solid #cfe9ff;
+}
+.card.back::after{content:'';position:absolute;inset:7%;border:1.5px solid rgba(255,255,255,.55);border-radius:8%}
+.card.slim{border-radius:7%}
+@keyframes dealin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.dealin{animation:dealin .3s ease-out both}
+
+/* ---------------- gate ---------------- */
+#gate{align-items:center;justify-content:center;text-align:center;padding:30px;gap:16px}
+#gate h1{font-size:40px;margin:0;font-weight:400;letter-spacing:.06em;
+  background:linear-gradient(180deg,var(--gold-hi),var(--gold));-webkit-background-clip:text;
+  background-clip:text;color:transparent;text-shadow:none}
+#gate .suits{font-size:19px;letter-spacing:12px;margin-right:-12px;color:var(--gold);opacity:.75}
+#gate .suits .r{color:var(--purple)}
+#gate p{max-width:32ch;color:var(--bone-dim);margin:0;font-size:15px}
+.roles{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+
+/* ---------------- host ---------------- */
+#host{padding:0;overflow:hidden}
+.hosthead{flex:0 0 auto;padding:14px 18px 0}
+.credit{font:400 10px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);opacity:.4;letter-spacing:.08em;margin-bottom:10px}
+.hostbar{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.hostbar h2{margin:0;font-weight:400;font-size:25px;letter-spacing:.03em}
+.round{margin-left:auto;font:400 14px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);cursor:pointer}
+.round u{text-decoration:none;border-bottom:1px dotted var(--line)}
+.step{display:flex;gap:10px;align-items:baseline;margin-top:12px;font-size:15px}
+.step b{color:var(--gold);font-weight:400;font-size:13px;font-family:ui-monospace,Menlo,monospace}
+.pastemsg{margin-top:8px;font:400 13.5px/1.45 Georgia,serif;color:var(--turn);min-height:0}
+.pastemsg.good{color:var(--gold-hi)}
+.pastemsg:empty{display:none}
+.rule{height:1px;background:var(--line);margin:12px 0 0}
+.scroller{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 18px 8px;min-height:0}
+.boardlbl{font:400 11px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);letter-spacing:.1em;margin-bottom:9px}
+.board{display:flex;gap:10px;margin-bottom:18px}
+.board .card{--cw:var(--tw)}
+.seats{display:flex;gap:20px;flex-wrap:wrap;align-content:flex-start}
+.seat{width:200px;position:relative;padding-left:12px;border-left:2px solid transparent}
+.seat h3{margin:0 0 9px;font-weight:400;font-size:18px;display:flex;align-items:center;gap:8px}
+.seat h3 .drop{margin-left:auto;border:none;padding:2px 7px;font-size:17px;color:var(--bone-dim);line-height:1}
+.seat .mini{display:flex;gap:5px}
+.seat .mini .card{--cw:46px}
+.seat.live h3{color:var(--gold-hi)}
+.seat.now{border-left-color:var(--turn)}
+.seat.now h3{color:var(--turn)}
+.seat.won h3{color:var(--gold-hi);text-shadow:var(--glow)}
+.badge{font:400 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;border:1px solid var(--line);
+  padding:4px 6px;border-radius:2px;color:var(--bone-dim)}
+.badge.sent{color:var(--purple);border-color:var(--purple-dk)}
+.badge.on{color:var(--gold);border-color:var(--gold-dk)}
+.seatact{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.seatnote{font:400 12px/1.3 Georgia,serif;color:var(--turn);opacity:.85}
+.card.pickable{cursor:pointer;box-shadow:0 0 0 2px var(--turn),0 4px 12px rgba(0,0,0,.5)}
+.card.justtook{box-shadow:0 0 0 2px var(--gold),0 4px 12px rgba(0,0,0,.5)}
+.diag{font:400 11px/1.5 ui-monospace,Menlo,monospace;color:var(--bone-dim);opacity:.85;margin-top:8px}
+.diag.warn{color:var(--turn);opacity:1;font-family:Georgia,serif;font-size:12.5px;line-height:1.45;max-width:30ch}
+.hand-name{font:400 13px/1.5 Georgia,serif;color:var(--bone);margin-top:8px;min-height:1.5em}
+.seat.won .hand-name{color:var(--gold-hi)}
+.tip{color:var(--bone-dim);font-size:13px;max-width:54ch;padding-top:14px}
+.tip u{text-decoration:none;border-bottom:1px dotted var(--line)}
+.controls{flex:0 0 auto;display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+  padding:13px 18px calc(13px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--line);background:rgba(5,7,15,.96)}
+#addSeat{margin-right:auto}
+#deal{min-width:8.5em}
+
+/* ---------------- hand ---------------- */
+#hand{overflow:hidden}
+.topbar{position:absolute;top:0;left:0;right:0;z-index:7;padding:24px 14px 0;text-align:center;pointer-events:none}
+.topbar .tablerow{pointer-events:auto}
+.hcredit{position:absolute;top:7px;left:0;right:0;text-align:center;
+  font:400 9px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);opacity:.3;letter-spacing:.14em}
+.whose{font:400 15px/1.2 Georgia,serif;color:var(--bone-dim);margin-bottom:12px;min-height:1.2em}
+.whose.you{color:var(--turn);text-shadow:0 0 16px rgba(242,201,110,.5)}
+.whose b{font-weight:400;color:var(--turn)}
+.whose.you{font-size:17px}
+.tablerow{position:absolute;left:0;right:0;display:flex;gap:4px;justify-content:center;
+  align-items:flex-end;z-index:6}
+.tslot{position:relative;--rot:0deg;--dy:0px;
+  transform:rotate(var(--rot)) translateY(var(--dy));
+  transition:transform .22s cubic-bezier(.25,.9,.3,1)}
+.tablerow .tslot:nth-child(1){--rot:-10deg;--dy:10px;z-index:1}
+.tablerow .tslot:nth-child(2){--rot:0deg;--dy:-10px;z-index:3}
+.tablerow .tslot:nth-child(3){--rot:10deg;--dy:10px;z-index:2}
+.tslot .card{--cw:var(--tw)}
+.tslot.pick .card{box-shadow:0 0 0 2px var(--turn),0 4px 12px rgba(0,0,0,.5);cursor:pointer}
+.tslot.gone{opacity:.25}
+.tablerow .tslot.chosen{--dy:-30px;z-index:4}
+.tslot.chosen .card{box-shadow:0 0 0 3px var(--gold),0 10px 22px rgba(0,0,0,.65)}
+.slot.given{opacity:.34}
+.slot.given .card{box-shadow:0 0 0 2px var(--turn),0 6px 18px rgba(0,0,0,.55)}
+.pile{position:absolute;inset:0}
+.slot{
+  position:absolute;left:50%;width:var(--cw);height:calc(var(--cw)*1.4);
+  bottom:calc(var(--sink) * -1);margin-left:calc(var(--cw) / -2);
+  transform-origin:50% 140%;perspective:1400px;
+  transition:transform .3s cubic-bezier(.25,.9,.3,1),opacity .3s;
+  will-change:transform;
+}
+.flipper{position:absolute;inset:0;transform-style:preserve-3d;
+  transition:transform .4s cubic-bezier(.3,.8,.3,1)}
+.slot.up .flipper{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.face.front{transform:rotateY(180deg)}
+.slot.taken .card{box-shadow:0 0 0 2px var(--gold),0 6px 18px rgba(0,0,0,.55)}
+.gone{opacity:0;pointer-events:none}
+.actions{position:absolute;left:0;right:0;z-index:7;display:flex;gap:10px;
+  justify-content:center;pointer-events:none}
+.actions button{pointer-events:auto}
+.hint{position:absolute;left:0;right:0;z-index:6;text-align:center;
+  font:400 13px/1.4 Georgia,serif;color:var(--bone-dim);padding:0 20px}
+
+/* ---------------- handoff / pairing ---------------- */
+#relay{align-items:center;justify-content:center;text-align:center;padding:30px;gap:14px}
+.codebox{display:none;flex-direction:column;gap:10px;align-items:center;width:100%;max-width:34ch}
+.codebox.on{display:flex}
+.code{width:100%;height:92px;background:#070c18;color:var(--gold-hi);border:1px solid var(--line);
+  border-radius:4px;padding:9px;font:11px/1.45 ui-monospace,Menlo,monospace;
+  word-break:break-all;overflow:auto;-webkit-user-select:all;user-select:all;resize:none}
+.codehint{color:var(--bone-dim);font-size:13px;max-width:32ch}
+.joinwarn{display:none;max-width:32ch;margin:2px auto 0;padding:9px 11px;border-radius:4px;
+  border:1px solid var(--turn);color:var(--turn);font:400 13.5px/1.45 Georgia,serif}
+.joinwarn.on{display:block}
+#joinReal.urgent{background:var(--turn);border-color:var(--turn);color:#2a1f05;font-weight:700}
+#relay h2{font-weight:400;margin:0;font-size:26px}
+#relay p{color:var(--bone-dim);max-width:32ch;margin:0}
+.net{font:400 11px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);letter-spacing:.06em}
+.net.good{color:var(--gold)}
+.net.bad{color:var(--purple)}
+
+/* coins are the lives: three in front of you, paid into the pot when you lose */
+.coin{
+  width:19px;height:19px;border-radius:50%;flex:none;
+  background:radial-gradient(circle at 34% 28%,#ffeaa6,#d4a92a 58%,#8a6c11);
+  border:1px solid #6b5510;box-shadow:0 1px 2px rgba(0,0,0,.5);
+  display:flex;align-items:center;justify-content:center;
+  font:700 7px/1 ui-monospace,Menlo,monospace;color:#4a3a06;
+}
+.coin.p50{
+  border-radius:0;border:none;
+  clip-path:polygon(50% 0%,89.1% 18.8%,98.7% 61.1%,71.7% 95%,28.3% 95%,1.3% 61.1%,10.9% 18.8%);
+  background:radial-gradient(circle at 34% 28%,#f4f7fb,#b6c0cb 58%,#79828d);color:#39414a;
+}
+.coin.spent{opacity:.16;filter:grayscale(1);box-shadow:none}
+.coin.big{width:26px;height:26px;font-size:9px}
+.purse{display:flex;gap:4px;align-items:center}
+
+.opps{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin-bottom:10px}
+.opp{
+  border:1px solid var(--line);border-radius:4px;padding:6px 8px 7px;
+  min-width:78px;background:rgba(10,16,34,.5);
+}
+.opp.turn{border-color:var(--turn);box-shadow:0 0 14px rgba(242,201,110,.25)}
+.opp.out{opacity:.35}
+.opp .nm{font:400 12px/1.2 Georgia,serif;color:var(--bone);white-space:nowrap}
+.opp.turn .nm{color:var(--turn)}
+.opp .purse{margin-top:4px;justify-content:center}
+.opp .cards{display:flex;gap:2px;margin-top:5px;justify-content:center}
+.opp .cards .card{--cw:17px}
+.opp .hn{font:400 9.5px/1.25 ui-monospace,Menlo,monospace;color:var(--bone-dim);margin-top:4px;
+  max-width:96px;white-space:normal}
+.opp.won .nm{color:var(--gold-hi)}
+.opp.won .hn{color:var(--gold-hi)}
+.opp.knocked .nm::after{content:" \2691";color:var(--turn)}
+
+.mypurse{position:absolute;left:14px;z-index:7;display:flex;flex-direction:column;gap:5px;align-items:flex-start}
+.mypurse .lbl{font:400 9px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);letter-spacing:.1em}
+.potlbl{position:absolute;right:14px;z-index:7;text-align:right}
+.potlbl .v{font:400 17px/1 Georgia,serif;color:var(--gold-hi)}
+.potlbl .lbl{font:400 9px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);letter-spacing:.1em}
+
+.solobar{
+  position:absolute;left:0;right:0;z-index:70;display:none;
+  flex-direction:column;align-items:center;gap:11px;padding:16px 18px;text-align:center;
+  background:linear-gradient(180deg,rgba(5,7,15,0) 0%,rgba(5,7,15,.93) 18%,rgba(5,7,15,.93) 82%,rgba(5,7,15,0) 100%);
+}
+body.barred .pile{pointer-events:none}
+.solobar.on{display:flex}
+.solobar .res{font:400 16px/1.4 Georgia,serif;color:var(--bone);max-width:30ch}
+.solobar .res b{color:var(--turn);font-weight:400}
+
+#setup{align-items:center;justify-content:center;text-align:center;padding:30px;gap:8px}
+#setup h2{font:400 15px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);
+  letter-spacing:.12em;margin:14px 0 2px;font-weight:400}
+.picks{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.pick{display:flex;flex-direction:column;align-items:center;gap:6px;padding:11px 15px;min-width:92px}
+.pick.sel{border-color:var(--gold);box-shadow:var(--glow);color:var(--gold-hi)}
+.pick .sub{font:400 10px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);letter-spacing:.06em}
+.pick.sel .sub{color:var(--gold)}
+.stamp{position:fixed;right:12px;bottom:8px;z-index:60;
+  font:11px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);opacity:.5;padding:6px}
+body.handview .stamp{display:none}
+.gatecredit{position:fixed;left:12px;bottom:8px;z-index:60;display:none;
+  font:400 11px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);opacity:.5}
+.gatecredit.on{display:block}
+@media (prefers-reduced-motion:reduce){.flipper,.slot,.tslot{transition:none}}
+</style>
+</head>
+<body>
+
+<section id="gate" class="screen on">
+  <h1>Brag</h1>
+  <div class="suits">&#9824;<span class="r">&#9829;</span><span class="r">&#9830;</span>&#9827;</div>
+  <p id="gateMsg">Three cards each, three on the table. Swap one, knock when you are happy, worst hand drops a coin.</p>
+  <div class="roles">
+    <button class="primary" id="beSolo">Play on your own</button>
+    <button id="beTable">Deal round the table</button>
+  </div>
+</section>
+
+<section id="setup" class="screen">
+  <h1 style="font-size:30px;margin:0 0 4px" id="setupTitle">On your own</h1>
+  <h2>PLAYING FOR</h2>
+  <div class="picks" id="stakePicks">
+    <button class="pick sel" data-stake="1"><span class="purse"><i class="coin big">£1</i><i class="coin big">£1</i><i class="coin big">£1</i></span><span class="sub">£3 EACH</span></button>
+    <button class="pick" data-stake="0.5"><span class="purse"><i class="coin big p50">50p</i><i class="coin big p50">50p</i><i class="coin big p50">50p</i></span><span class="sub">£1.50 EACH</span></button>
+  </div>
+  <h2 id="countLbl">ROUND THE TABLE</h2>
+  <div class="picks" id="countPicks"></div>
+  <h2>KNOCKING</h2>
+  <div class="picks" id="rulePicks">
+    <button class="pick sel" data-rule="same">Swap and knock<span class="sub">SAME GO</span></button>
+    <button class="pick" data-rule="next">Knock instead<span class="sub">OF SWAPPING</span></button>
+  </div>
+  <button class="primary" id="startSolo" style="margin-top:20px">Deal them out</button>
+</section>
+
+<section id="hand" class="screen">
+  <div class="topbar">
+    <div class="hcredit" id="hCredit">&copy; 2026 Ben Stiff @ Room46.uk &middot; v0.4.0</div>
+    <div class="opps" id="opps"></div>
+    <div class="whose" id="whose">waiting for the deal</div>
+    <div class="tablerow" id="tablerow"></div>
+  </div>
+  <div class="potlbl" id="potlbl" style="display:none"><div class="v" id="potV"></div><div class="lbl">IN THE POT</div></div>
+  <div class="mypurse" id="mypurse" style="display:none"><div class="lbl">YOURS</div><div class="purse" id="myCoins"></div></div>
+  <div class="solobar" id="solobar"><div class="res" id="soloRes"></div><div id="soloActs"></div></div>
+  <div class="hint" id="hint"></div>
+  <div class="pile" id="pile"></div>
+  <div class="actions" id="actions"></div>
+</section>
+
+<div class="stamp" id="stamp">v0.4.0</div>
+<div class="gatecredit" id="gateCredit">&copy; 2026 Ben Stiff @ Room46.uk</div>
+
+<script>
+"use strict";
+const VERSION="0.4.0";
+const BUILD="HO·Ben Stiff @ Room46.uk·0.4.0·2026-11-27·bg7d2f";
+const LOCK_HOST="";   // e.g. "s77ffy.github.io" — empty means no lock
+const HOME_URL ="";   // e.g. "https://s77ffy.github.io/Brag/"
+(function lock(){
+  if(!LOCK_HOST) return;
+  const h=location.hostname;
+  if(location.protocol==="file:"||h==="localhost"||h==="127.0.0.1"||h===LOCK_HOST) return;
+  document.body.innerHTML='<section class="screen on" style="align-items:center;justify-content:center;text-align:center;padding:32px;gap:16px"><h1 style="font-weight:400">Unofficial copy</h1><p style="color:#8fa3c8">Play the real one at '+(HOME_URL?'<a href="'+HOME_URL+'" style="color:#22d3ee">'+HOME_URL+'</a>':'Room46.uk')+'</p></section>';
+  throw new Error("host lock");
+})();
+
+const $=s=>document.querySelector(s);
+const el=(t,c)=>{const e=document.createElement(t); if(c)e.className=c; return e;};
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const SUIT=["♠","♥","♦","♣"];
+const RANK=["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
+const cardRank=c=>RANK[c%13], cardSuit=c=>SUIT[(c/13)|0];
+const cardRed=c=>{const s=(c/13)|0; return s===1||s===2;};
+
+/* ===================== card faces (from Noms) ===================== */
+const PIPS={
+  2:[[50,22],[50,78,1]],
+  3:[[50,22],[50,50],[50,78,1]],
+  4:[[33,22],[67,22],[33,78,1],[67,78,1]],
+  5:[[33,22],[67,22],[50,50],[33,78,1],[67,78,1]],
+  6:[[33,22],[67,22],[33,50],[67,50],[33,78,1],[67,78,1]],
+  7:[[33,22],[67,22],[50,36],[33,50],[67,50],[33,78,1],[67,78,1]],
+  8:[[33,22],[67,22],[50,36],[33,50],[67,50],[50,64,1],[33,78,1],[67,78,1]],
+  9:[[33,20],[67,20],[33,41],[67,41],[50,50],[33,59,1],[67,59,1],[33,80,1],[67,80,1]],
+  10:[[33,20],[67,20],[50,30],[33,41],[67,41],[33,59,1],[67,59,1],[50,70,1],[33,80,1],[67,80,1]]
+};
+function cardFaceHTML(c){
+  const sym=cardSuit(c), rl=cardRank(c), r=(c%13)+2;   // 2..14
+  let h='<span class="corner"><b>'+rl+'</b><i>'+sym+'</i></span>';
+  if(r===14) h+='<span class="apip'+(((c/13)|0)===0?' asp':'')+'">'+sym+'</span>';
+  else if(r>=11) h+='<span class="court"><span class="cl">'+rl+'</span><span class="cs">'+sym+'</span></span>';
+  else{ const pp=PIPS[r]; for(let i=0;i<pp.length;i++)
+    h+='<span class="pip'+(pp[i][2]?' f':'')+'" style="left:'+pp[i][0]+'%;top:'+pp[i][1]+'%">'+sym+'</span>'; }
+  h+='<span class="corner br"><b>'+rl+'</b><i>'+sym+'</i></span>';
+  return h;
+}
+function faceEl(c,extra){
+  const e=el("div","card"+(cardRed(c)?" red":"")+(extra?" "+extra:""));
+  e.innerHTML=cardFaceHTML(c); e.setAttribute("aria-label",cardRank(c)+" of "+cardSuit(c));
+  return e;
+}
+function backEl(extra){
+  const e=el("div","card back"+(extra?" "+extra:"")); e.setAttribute("aria-hidden","true"); return e;
+}
+
+/* ===================== engine ===================== */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function hashStr(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function newHand(seed,round,n,knockRule){
+  const rnd=mulberry32(hashStr(seed+"#"+round));
+  const d=[...Array(52).keys()];
+  for(let i=51;i>0;i--){const j=Math.floor(rnd()*(i+1));[d[i],d[j]]=[d[j],d[i]];}
+  const hands=[]; let k=0;
+  for(let s=0;s<n;s++) hands.push([d[k++],d[k++],d[k++]]);
+  return { n, hands, table:[d[k++],d[k++],d[k++]], faceUp:[true,false,true], turn:0,
+           goes:0, knockedBy:null, toGo:null, knockRule:knockRule||"same",
+           done:false, winners:null };
+}
+function legal(G,seat){
+  if(!G||G.done||seat!==G.turn) return {swap:false,knock:false};
+  if(G.knockedBy!==null) return {swap:true,knock:false};
+  // everyone gets a go before anybody is allowed to knock
+  if((G.goes||0) < G.n) return {swap:true,knock:false};
+  return {swap:true,knock:true};
+}
+function applyMove(G,seat,mv){
+  const can=legal(G,seat);
+  if(!can.swap&&!can.knock) return {ok:false,why:"not your go"};
+  const wantsSwap=mv.take!=null&&mv.drop!=null, wantsKnock=!!mv.knock;
+  if(wantsKnock&&!can.knock) return {ok:false,why:"you cannot knock now"};
+  if(G.knockRule==="next"&&wantsKnock&&wantsSwap) return {ok:false,why:"knock instead of swapping, not as well"};
+  if(G.knockRule==="same"&&!wantsSwap) return {ok:false,why:"you must swap on your go"};
+  if(G.knockRule==="next"&&!wantsSwap&&!wantsKnock) return {ok:false,why:"swap or knock"};
+  if(G.knockedBy!==null&&!wantsSwap) return {ok:false,why:"you must swap on your last go"};
+  if(wantsSwap){
+    // you never hold four: the card you take goes straight into the place of
+    // the one you give up, so taking one and handing it back is not a move
+    if(mv.take<0||mv.take>2||mv.drop<0||mv.drop>2) return {ok:false,why:"no such card"};
+    const hand=G.hands[seat].slice();
+    const dropped=hand[mv.drop];
+    hand[mv.drop]=G.table[mv.take];
+    G.hands[seat]=hand; G.table[mv.take]=dropped;
+  }
+  G.goes=(G.goes||0)+1;
+  if(wantsKnock&&G.knockedBy===null){ G.knockedBy=seat; G.toGo=G.n-1; }
+  if(G.knockedBy!==null&&G.toGo!==null&&seat!==G.knockedBy) G.toGo--;
+  if(G.knockedBy!==null&&G.toGo<=0){ G.done=true; G.turn=null; }
+  else G.turn=(seat+1)%G.n;
+  return {ok:true};
+}
+function rankHand(cards){
+  const r=cards.map(c=>c%13).sort((a,b)=>b-a), su=cards.map(c=>(c/13)|0);
+  const flush=su[0]===su[1]&&su[1]===su[2], set=r[0]===r[1]&&r[1]===r[2];
+  const a23=r[0]===12&&r[1]===1&&r[2]===0;
+  const run=a23||(r[0]===r[1]+1&&r[1]===r[2]+1);
+  let cat,tie;
+  if(set){cat=5;tie=[r[0]===1?13:r[0]];}
+  else if(run&&flush){cat=4;tie=[a23?13:r[0]];}
+  else if(run){cat=3;tie=[a23?13:r[0]];}
+  else if(flush){cat=2;tie=r.slice();}
+  else if(r[0]===r[1]||r[1]===r[2]){const pr=r[1],kick=(r[0]===r[1])?r[2]:r[0];cat=1;tie=[pr,kick];}
+  else{cat=0;tie=r.slice();}
+  return {cat,tie,name:handName(cat,tie,r,a23)};
+}
+function handName(cat,tie,r,a23){
+  const P=["twos","threes","fours","fives","sixes","sevens","eights","nines","tens","jacks","queens","kings","aces"];
+  const N=["two","three","four","five","six","seven","eight","nine","ten","jack","queen","king","ace"];
+  const SH=["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
+  if(cat===5) return "prial of "+P[r[0]];
+  if(cat===4||cat===3){
+    const label=a23?"ace–three–two":N[r[0]]+" high";
+    return (cat===4?"running flush, ":"run, ")+label;
+  }
+  const three=SH[r[0]]+" "+SH[r[1]]+" "+SH[r[2]];
+  if(cat===2) return three+" flush";
+  if(cat===1) return "pair of "+P[tie[0]]+", "+SH[tie[1]]+" with it";
+  return three+" high";
+}
+function compareHands(a,b){
+  if(a.cat!==b.cat) return b.cat-a.cat;
+  for(let i=0;i<Math.max(a.tie.length,b.tie.length);i++){
+    const x=a.tie[i]||0,y=b.tie[i]||0; if(x!==y) return y-x;
+  }
+  return 0;
+}
+function showdown(entries){
+  const ranked=entries.map(e=>({...e,hand:rankHand(e.cards)}));
+  ranked.sort((x,y)=>compareHands(x.hand,y.hand));
+  let place=1;
+  ranked.forEach((e,i)=>{ if(i>0&&compareHands(ranked[i-1].hand,e.hand)!==0) place=i+1; e.place=place; });
+  return ranked;
+}
+
+/* ===================== storage ===================== */
+const store={
+  get host(){ try{return JSON.parse(localStorage.getItem("brag.host")||"null");}catch(e){return null;} },
+  set host(v){ try{localStorage.setItem("brag.host",JSON.stringify(v));}catch(e){} },
+  get me(){ try{return JSON.parse(localStorage.getItem("brag.me")||"null");}catch(e){return null;} },
+  set me(v){ try{localStorage.setItem("brag.me",JSON.stringify(v));}catch(e){} }
+};
+function hashParams(){
+  const h=location.hash.replace(/^#/,""); if(!h) return null;
+  const p={}; for(const kv of h.split("&")){const i=kv.indexOf("="); if(i>0) p[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1));}
+  return p;
+}
+
+
+/* ===================== hand (a player's phone) ===================== */
+const P={ seat:0, name:"You", S:null, giving:null, pc:null, dc:null, net:"offline" };
+let slots=[];
+
+function handBoot(cfg){
+  Object.assign(P,cfg);
+  document.body.classList.add("handview");
+  $("#hCredit").textContent="© 2026 Ben Stiff @ Room46.uk · v"+VERSION;
+  $("#gate").classList.remove("on"); $("#hand").classList.add("on");
+  $("#gateCredit").classList.remove("on");
+  addEventListener("resize",()=>{ sizeCards(); layout(); layoutSolo(); });
+  try{ navigator.wakeLock && navigator.wakeLock.request("screen").catch(()=>{}); }catch(e){}
+  drawHand();
+}
+function send(o){
+  if(AWAY.on){ if(o&&o.t==="move") sendMyGo(o); return; }
+  if(SOLO.on){ if(o&&o.t==="move") soloMove(mySeat(), o); return; }
+  if(P.dc&&P.dc.readyState==="open"){ try{P.dc.send(JSON.stringify(o));}catch(e){} }
+}
+
+/* --- geometry --- */
+let FAN=8, CW=200, SINKPX=40, RAISE=1.15, TW=62;
+const PIVOT=1.40, PAD=0.06, STRIP=56, EDGE=6;
+function sizeCards(){
+  const W=innerWidth, Hh=innerHeight;
+  const n=Math.max(slots.length,1), half=(n-1)/2, spread=STRIP*half;
+  TW=Math.round(Math.min(Math.max(W*0.185,54), 92));
+  document.documentElement.style.setProperty("--tw",TW+"px");
+  const opps = document.querySelector("#opps");
+  const topUsed = 56 + (opps ? opps.offsetHeight : 0) + (TW*1.4) + 96;
+  let cw=(W/2-EDGE-spread)/(0.5-PAD);
+  cw=Math.min(cw, (Hh-topUsed)*0.78, W*0.80, 330);   // a big screen is not an excuse
+  CW=Math.round(cw);
+  document.documentElement.style.setProperty("--cw",CW+"px");
+  SINKPX=Math.round(CW*1.4*0.10);
+  document.documentElement.style.setProperty("--sink",SINKPX+"px");
+  FAN=(n>1)?Math.asin(Math.min(STRIP/(PIVOT*CW*1.4),0.3))*180/Math.PI:0;
+  RAISE=Math.min((W*0.92)/CW,(Hh-topUsed-20)*0.95/(CW*1.4));
+  if(RAISE<1) RAISE=1;
+}
+function baseAngle(i,n){ return (i-(n-1)/2)*FAN; }
+
+/* --- draw --- */
+function drawHand(){
+  const S=P.S;
+  const whose=$("#whose"), row=$("#tablerow"), act=$("#actions"), hint=$("#hint");
+  act.innerHTML=""; row.innerHTML="";
+  if(SOLO.on && (!S||!S.you)){
+    $("#pile").innerHTML=""; slots=[];
+    $("#whose").className="whose"; $("#whose").textContent="";
+    $("#hint").textContent="";
+    const row=$("#tablerow"); row.innerHTML="";
+    if(S&&S.table) S.table.forEach((c,k)=>{
+      const t=el("div","tslot");
+      t.appendChild((S.faceUp[k]||S.done) ? faceEl(c) : backEl());
+      row.appendChild(t);
+    });
+    drawSolo(); return;
+  }
+  if(!S||S.waiting||!S.you){
+    whose.className="whose";
+    whose.textContent = P.net==="open" ? "waiting for the deal" :
+                        P.net==="connecting" ? "connecting…" :
+                        P.net==="failed" ? "could not reach the table" : "not connected";
+    $("#pile").innerHTML=""; slots=[]; hint.textContent=""; return;
+  }
+  const mine = S.turn===S.seat && !S.done;
+  whose.className="whose"+(mine?" you":"");
+  if(S.done){
+    const w=(S.show&&S.show.winners)||[];
+    whose.textContent = w.indexOf(S.seat)>=0 ? "You win it" : (w.length? S.names[w[0]]+" wins it" : "Show");
+  } else if(mine) whose.innerHTML = P.giving==null ? "<b>Your go</b> — flick one of yours away" : "<b>Your go</b> — now take one off the table";
+  else whose.innerHTML = "<b>"+esc(S.names[S.turn]||"–")+"</b> to go";
+
+  S.table.forEach((c,k)=>{
+    const t=el("div","tslot");
+    const faceUp = S.faceUp[k]||S.done;
+    t.appendChild(faceUp?faceEl(c):backEl());
+    if(mine && P.giving!=null && S.can && S.can.swap){
+      t.classList.add("pick");
+      t.onclick=()=>takeCard(k);
+    }
+    row.appendChild(t);
+  });
+
+  if(S.done && S.show){
+    const mineName=(S.show.names||[]).find(x=>x.i===S.seat);
+    hint.textContent=mineName?("You had "+mineName.name):"";
+  } else if(mine && P.giving!=null) hint.textContent = P.knockWith
+      ? "Take one and you have knocked" : "Tap the one you want in its place";
+  else if(mine) hint.textContent = S.knockedBy!==null ? "Last go before the show" : "";
+  else hint.textContent = S.knockedBy!=null ? (S.names[S.knockedBy]+" knocked") : "";
+  positionHint();
+
+  if(mine && S.can && S.can.knock){
+    if(S.knockRule==="next" && P.giving==null){
+      const k=el("button","knock"); k.textContent="Knock \u2014 I'm happy";
+      k.onclick=()=>{ send({t:"move",take:null,drop:null,knock:true}); P.giving=null; };
+      act.appendChild(k);
+    } else if(S.knockRule==="same"){
+      // swap and knock on the same go: arm it, then put a card back
+      const k=el("button","knock"+(P.knockWith?" armed":""));
+      k.textContent = P.knockWith ? "Knocking \u2713" : "Knock with this swap";
+      k.onclick=()=>{ P.knockWith=!P.knockWith; drawHand(); };
+      act.appendChild(k);
+    }
+  }
+  drawSlots();
+  drawSolo();
+}
+function positionHint(){
+  const fanTop = innerHeight + SINKPX - CW*1.4;      // where the held cards begin
+  const opps = document.querySelector("#opps");
+  const whose = document.querySelector("#whose");
+  const barBottom = 26 + (opps ? opps.offsetHeight : 0) + (whose ? whose.offsetHeight : 0) + 18;
+  const th = TW*1.4;
+  let top = barBottom + (fanTop - barBottom - th)/2 - 16;
+  top = Math.max(barBottom, Math.min(top, fanTop - th - 96));
+  $("#tablerow").style.top = Math.round(top)+"px";
+  $("#hint").style.top = Math.round(top + th + 14)+"px";
+  $("#actions").style.top = Math.round(top + th + 40)+"px";
+}
+function cardsInHand(){
+  const S=P.S; if(!S||!S.you) return [];
+  return S.you.slice();                       // never four — a swap is one move
+}
+function drawSlots(){
+  const pile=$("#pile"); pile.innerHTML=""; slots=[];
+  const cards=cardsInHand(), S=P.S;
+  const faceUp = true;
+  cards.forEach((c,i)=>{
+    const s=el("div","slot");
+    const f=el("div","flipper");
+    const back=el("div","face"); back.appendChild(backEl());
+    const front=el("div","face front"); front.appendChild(faceEl(c));
+    f.appendChild(back); f.appendChild(front); s.appendChild(f);
+    if(P.giving===i) s.classList.add("given");
+    pile.appendChild(s);
+    const rec={node:s,idx:i,dx:0,dy:0,raised:false};
+    slots.push(rec); bindSlot(rec,c);
+  });
+  sizeCards();
+  slots.forEach(s=>{ s.node.classList.add("up"); place(s,false); });
+  positionHint();
+}
+function place(s,anim){
+  const n=slots.length,a=baseAngle(s.idx,n);
+  s.node.style.transition=anim?"":"none";
+  if(s.raised){
+    const centreY=innerHeight+SINKPX-(CW*1.4)/2;
+    const up=centreY-innerHeight*0.60;
+    s.node.style.transformOrigin="50% 50%";
+    s.node.style.transform=`translate(${s.dx}px,${s.dy-up}px) rotate(0deg) scale(${RAISE})`;
+  }else{
+    s.node.style.transformOrigin="50% 140%";
+    s.node.style.transform=`translate(${s.dx}px,${s.dy}px) rotate(${a}deg)`;
+  }
+  s.node.style.zIndex=s.raised?50:10+s.idx;
+}
+function layout(){ slots.forEach(s=>place(s,true)); positionHint(); if(SOLO.on) layoutSolo(); }
+function giveCard(i){                      // flick one of yours away, ready to replace
+  const S=P.S; if(!S||!S.can||!S.can.swap) return;
+  P.giving = (P.giving===i) ? null : i;
+  slots.forEach(s=>{s.raised=false;s.dx=0;s.dy=0;});
+  drawHand();
+}
+function takeCard(k){                      // and take this one in its place
+  const S=P.S; if(!S||P.giving==null) return;
+  send({t:"move",take:k,drop:P.giving,knock:S.knockRule==="same"&&P.knockWith===true});
+  P.knockWith=false; P.giving=null;
+  slots.forEach(s=>{s.raised=false;s.dx=0;s.dy=0;});
+}
+function bindSlot(s,card){
+  let id=null,x0=0,y0=0,moved=0,hist=[];
+  s.node.addEventListener("pointerdown",e=>{
+    id=e.pointerId; s.node.setPointerCapture(id);
+    x0=e.clientX;y0=e.clientY;moved=0;hist=[{t:performance.now(),x:e.clientX,y:e.clientY}];
+    s.node.style.transition="none";
+  });
+  s.node.addEventListener("pointermove",e=>{
+    if(e.pointerId!==id) return;
+    s.dx=e.clientX-x0; s.dy=e.clientY-y0;
+    moved=Math.max(moved,Math.hypot(s.dx,s.dy));
+    hist.push({t:performance.now(),x:e.clientX,y:e.clientY}); if(hist.length>8) hist.shift();
+    s.node.style.zIndex=60; place(s,false);
+  });
+  s.node.addEventListener("pointerup",e=>{
+    if(e.pointerId!==id) return; id=null;
+    const now=performance.now(),old=hist[0],dt=Math.max(now-old.t,1);
+    const vy=(e.clientY-old.y)/dt;
+    const myGo = P.S && P.S.can && P.S.can.swap;
+    // a flick gives this card up; a tap just lifts it for a look
+    if(myGo && (vy<-0.55 || s.dy<-150)){ giveCard(s.idx); return; }
+    if(moved<12){
+      if(myGo && P.giving===s.idx){ giveCard(s.idx); return; }   // tap it back
+      const r=!s.raised; slots.forEach(o=>{o.raised=false;o.dx=0;o.dy=0;});
+      s.raised=r; layout(); return;
+    }
+    s.dx=0;s.dy=0;place(s,true);
+  });
+  s.node.addEventListener("pointercancel",()=>{ id=null;s.dx=0;s.dy=0;place(s,true); });
+}
+
+
+/* ===================== on your own ===================== */
+// Coins are lives. Three in front of everyone; worst hand at the show pays one
+// into the pot. A prial costs everyone else a coin instead. Last one with a
+// coin takes the lot.
+const CPUNAMES=["Alf","Betty","Cass","Dex","Edie","Fitz","Gus"];
+function rnd12(){ const a=new Uint8Array(8); crypto.getRandomValues(a);
+  return [...a].map(b=>b.toString(16).padStart(2,"0")).join(""); }
+const SOLO={ on:false, airdrop:false, coin:1, pot:0, players:[], order:[], G:null, round:0,
+             seed:null, knockRule:"same", ranked:null, msg:"", over:false,
+             busy:false, goes:0 };
+
+function money(n){
+  const v=n*SOLO.coin;
+  return (v%1===0) ? "£"+v : (v<1 ? Math.round(v*100)+"p" : "£"+v.toFixed(2));
+}
+function soloStart(coin, nCpu, rule, airdrop){
+  SOLO.on=true; SOLO.airdrop=!!airdrop; SOLO.coin=coin; SOLO.knockRule=rule||"same";
+  SOLO.pot=0; SOLO.round=0; SOLO.over=false; SOLO.msg=""; SOLO.ranked=null; SOLO.busy=false;
+  SOLO.seed=rnd12().slice(0,8);
+  SOLO.players=[{name:"You",lives:3,cpu:false}];
+  const pool=CPUNAMES.slice();
+  for(let i=0;i<nCpu;i++){
+    if(airdrop){ SOLO.players.push({name:"Player "+(i+1), lives:3, cpu:false, away:true}); continue; }
+    const nm=pool.splice(Math.floor(Math.random()*pool.length),1)[0];
+    SOLO.players.push({name:nm, lives:3, cpu:true, tight:0.35+Math.random()*0.5});
+  }
+  P.net="open"; P.giving=null; P.knockWith=false;
+  handBoot({seat:0,name:"You"});
+  soloDeal();
+}
+function saveTable(){
+  if(!SOLO.airdrop) return;
+  try{ localStorage.setItem("brag.table", JSON.stringify({
+    coin:SOLO.coin, pot:SOLO.pot, players:SOLO.players, order:SOLO.order,
+    G:SOLO.G, round:SOLO.round, seed:SOLO.seed, knockRule:SOLO.knockRule,
+    over:SOLO.over
+  })); }catch(e){}
+}
+function loadTable(){
+  try{
+    const d=JSON.parse(localStorage.getItem("brag.table")||"null");
+    if(!d||!d.players) return false;
+    Object.assign(SOLO,{on:true,airdrop:true,ranked:null,msg:"",busy:false},d);
+    return true;
+  }catch(e){ return false; }
+}
+function aliveIdx(){ return SOLO.players.map((p,i)=>i).filter(i=>SOLO.players[i].lives>0); }
+function soloDeal(){
+  const alive=aliveIdx();
+  if(alive.length<2){ SOLO.over=true; pushSolo(); return; }
+  SOLO.round++; SOLO.ranked=null; SOLO.msg="";
+  const rot=(SOLO.round-1)%alive.length;            // the lead moves round each hand
+  SOLO.order=alive.slice(rot).concat(alive.slice(0,rot));
+  SOLO.G=newHand(SOLO.seed, SOLO.round, SOLO.order.length, SOLO.knockRule);
+  P.giving=null; P.knockWith=false;
+  saveTable();
+  pushSolo();
+}
+function mySeat(){ return SOLO.order.indexOf(0); }
+function viewForSolo(seat){
+  const G=SOLO.G, names=SOLO.order.map(pi=>SOLO.players[pi].name);
+  if(!G) return {t:"state",seat,names,waiting:true,knockRule:SOLO.knockRule};
+  if(seat<0) return { t:"state", seat:-1, names, knockRule:G.knockRule, watching:true,
+           you:null, table:G.table.slice(), faceUp:G.faceUp.slice(),
+           turn:G.turn, knockedBy:G.knockedBy, toGo:G.toGo, done:G.done, round:SOLO.round,
+           can:{swap:false,knock:false},
+           show: G.done&&SOLO.ranked ? {hands:G.hands, winners:G.winners,
+                  names:SOLO.ranked.map(r=>({i:r.i,name:r.hand.name}))} : null };
+  return { t:"state", seat, names, knockRule:G.knockRule,
+           you:G.hands[seat].slice(), table:G.table.slice(), faceUp:G.faceUp.slice(),
+           turn:G.turn, knockedBy:G.knockedBy, toGo:G.toGo, done:G.done, round:SOLO.round,
+           can:legal(G,seat),
+           show: G.done&&SOLO.ranked ? {hands:G.hands, winners:G.winners,
+                  names:SOLO.ranked.map(r=>({i:r.i,name:r.hand.name}))} : null };
+}
+function pushSolo(){
+  P.S = SOLO.G ? viewForSolo(mySeat()) : null;
+  drawHand();
+  soloThink();
+}
+function soloMove(seat, mv){
+  if(!SOLO.G || SOLO.G.done) return;
+  if(seat!==SOLO.G.turn) { pushSolo(); return; }
+  if(seat===mySeat()){ P.giving=null; P.knockWith=false; }
+  const r=applyMove(SOLO.G, seat, mv);
+  if(!r.ok){ pushSolo(); return; }
+  saveTable();
+  if(SOLO.G.done) soloSettle(); else pushSolo();
+}
+function soloThink(){
+  if(!SOLO.on||!SOLO.G||SOLO.G.done||SOLO.busy) return;
+  const seat=SOLO.G.turn, pi=SOLO.order[seat];
+  if(pi==null || !SOLO.players[pi].cpu) return;
+  if(SOLO.players[pi].away) return;
+  SOLO.busy=true;
+  setTimeout(()=>{
+    SOLO.busy=false;
+    if(!SOLO.on||!SOLO.G||SOLO.G.done) return;
+    const G=SOLO.G, mv=cpuChoose(G, seat, SOLO.players[pi]);
+    if(!applyMove(G, seat, mv).ok){
+      // never let a bad choice stall the table: fall back to the plainest legal go
+      const fb={take:0, drop:0, knock:false};
+      if(!applyMove(G, seat, fb).ok){ SOLO.G.turn=(seat+1)%G.n; pushSolo(); return; }
+    }
+    if(G.done) soloSettle(); else pushSolo();
+  }, 700+Math.random()*650);
+}
+
+/* --- the opponents' heads. They never see a face-down card. --- */
+function handScore(cards){
+  const r=rankHand(cards);
+  return r.cat*1e6 + (r.tie[0]||0)*1e4 + (r.tie[1]||0)*1e2 + (r.tie[2]||0);
+}
+// Every swap now costs a card, so a face-down one is a real gamble. Value it
+// by averaging over every card this player has not seen — which is only its
+// own three and whatever is face up. It never looks at a face-down card.
+function unseenFrom(G, seat){
+  const seen=new Set(G.hands[seat]);
+  G.faceUp.forEach((up,i)=>{ if(up) seen.add(G.table[i]); });
+  const out=[];
+  for(let c=0;c<52;c++) if(!seen.has(c)) out.push(c);
+  return out;
+}
+function cpuChoose(G, seat, me){
+  const hand=G.hands[seat].slice();
+  const ups=[0,1,2].filter(i=>G.faceUp[i]);
+  const downs=[0,1,2].filter(i=>!G.faceUp[i]);
+  const jitter=(1-(me.tight||0.5))*0.04;
+  const wobble=()=>1+(Math.random()-0.5)*jitter;
+
+  let best=null;
+  for(const u of ups){                         // the cards showing: known exactly
+    for(let d=0;d<3;d++){
+      const k=hand.slice(); k[d]=G.table[u];
+      const sc=handScore(k)*wobble();
+      if(!best||sc>best.score) best={score:sc, take:u, drop:d};
+    }
+  }
+  const pool=unseenFrom(G,seat);
+  for(const t of downs){                       // face down: what it is worth on average
+    for(let d=0;d<3;d++){
+      let sum=0;
+      for(let i=0;i<pool.length;i++){ const k=hand.slice(); k[d]=pool[i]; sum+=handScore(k); }
+      const ev=(sum/pool.length)*wobble();
+      if(!best||ev>best.score) best={score:ev, take:t, drop:d};
+    }
+  }
+  if(!best) best={take:0, drop:0};
+
+  const after=hand.slice(); after[best.drop]=G.table[best.take];
+  const r=rankHand(after);
+  let knock=false;
+  if(legal(G,seat).knock){
+    const tight=me.tight||0.5, goes=G.goes||0;
+    if(r.cat>=2) knock=true;                                        // flush or better
+    else if(r.cat===1 && r.tie[0]>=9-Math.round(tight*4)) knock=true;
+    else if(goes>=G.n*2 && r.cat>=1) knock=true;
+    else if(goes>=G.n*3 && r.tie[0]>=11) knock=true;                // ace or king high
+    else if(goes>=G.n*4) knock=true;                                // somebody has to
+  }
+  if(G.knockRule==="next" && knock) return {take:null,drop:null,knock:true};
+  return {take:best.take, drop:best.drop, knock:G.knockRule==="same" ? knock : false};
+}
+
+/* --- paying up --- */
+function soloSettle(){
+  const G=SOLO.G;
+  SOLO.ranked=showdown(G.hands.map((cards,i)=>({i,cards})));
+  G.winners=SOLO.ranked.filter(e=>e.place===1).map(e=>e.i);
+  const nm=seatN=>SOLO.players[SOLO.order[seatN]].name;
+  const top=SOLO.ranked[0];
+  let losers=[], msg="";
+  if(top.hand.cat===5){
+    losers=SOLO.ranked.filter(e=>e.i!==top.i).map(e=>e.i);
+    msg=(nm(top.i)==="You"?"You show":nm(top.i)+" shows")+" a <b>"+top.hand.name+"</b>. Everyone else drops a coin.";
+  } else {
+    const worst=SOLO.ranked[SOLO.ranked.length-1];
+    losers=SOLO.ranked.filter(e=>compareHands(e.hand,worst.hand)===0).map(e=>e.i);
+    const who=losers.map(nm);
+    msg = who.length>1
+      ? who.join(" and ")+" tie for worst with <b>"+worst.hand.name+"</b> — a coin each."
+      : (who[0]==="You"?"You have":who[0]+" has")+" the worst hand, <b>"+worst.hand.name+"</b>. That is a coin.";
+  }
+  const gone=[];
+  for(const seatN of losers){
+    const pi=SOLO.order[seatN], pl=SOLO.players[pi];
+    if(pl.lives>0){ pl.lives--; SOLO.pot++; if(pl.lives===0) gone.push(pl.name); }
+  }
+  if(gone.length) msg+=" "+gone.join(" and ")+(gone.length>1?" are":" is")+" out.";
+  const left=aliveIdx();
+  if(left.length<=1){
+    SOLO.over=true;
+    msg += left.length===1
+      ? " <b>"+(SOLO.players[left[0]].name==="You"?"You take":SOLO.players[left[0]].name+" takes")+" the "+money(SOLO.pot)+".</b>"
+      : " <b>Everyone is out — the "+money(SOLO.pot)+" is split.</b>";
+  }
+  SOLO.msg=msg;
+  saveTable();
+  pushSolo();
+}
+
+/* --- the extra furniture on the solo table --- */
+function coinEl(spent){
+  const e=el("i","coin"+(SOLO.coin===0.5?" p50":"")+(spent?" spent":""));
+  e.textContent = SOLO.coin===0.5 ? "50p" : "£1";
+  return e;
+}
+function purseEl(lives){
+  const w=el("span","purse");
+  for(let i=0;i<3;i++) w.appendChild(coinEl(i>=lives));
+  return w;
+}
+function drawSolo(){
+  if(!SOLO.on) return;
+  const G=SOLO.G, S=P.S;
+  $("#potlbl").style.display=""; $("#mypurse").style.display="";
+  $("#potV").textContent=money(SOLO.pot);
+  const me=SOLO.players[0];
+  const mc=$("#myCoins"); mc.innerHTML="";
+  for(let i=0;i<3;i++) mc.appendChild(coinEl(i>=me.lives));
+
+  const box=$("#opps"); box.innerHTML="";
+  SOLO.players.forEach((pl,pi)=>{
+    if(pi===0) return;
+    const seatN=SOLO.order.indexOf(pi);
+    const d=el("div","opp"+(pl.lives<=0?" out":""));
+    if(G&&!G.done&&seatN>=0&&G.turn===seatN) d.classList.add("turn");
+    if(G&&G.knockedBy===seatN) d.classList.add("knocked");
+    if(G&&G.done&&G.winners&&G.winners.indexOf(seatN)>=0) d.classList.add("won");
+    const n=el("div","nm"); n.textContent=pl.name; d.appendChild(n);
+    d.appendChild(purseEl(pl.lives));
+    if(G&&seatN>=0){
+      const cs=el("div","cards");
+      for(let j=0;j<3;j++) cs.appendChild(G.done ? faceEl(G.hands[seatN][j]) : backEl());
+      d.appendChild(cs);
+      if(G.done){ const h=el("div","hn"); h.textContent=rankHand(G.hands[seatN]).name; d.appendChild(h); }
+    }
+    box.appendChild(d);
+  });
+
+  const bar=$("#solobar"), res=$("#soloRes"), acts=$("#soloActs");
+  if(drawAway()) return;
+  const watching = SOLO.players[0].lives<=0 && !SOLO.over;
+  document.body.classList.toggle("barred", !!(G&&G.done&&SOLO.msg));
+  if(G&&G.done&&SOLO.msg){
+    bar.classList.add("on"); res.innerHTML=SOLO.msg; acts.innerHTML="";
+    const b=el("button","primary");
+    b.textContent = SOLO.over ? "Play again" : (watching ? "Carry on" : "Next hand");
+    b.onclick = SOLO.over
+      ? ()=>{ bar.classList.remove("on"); $("#hand").classList.remove("on");
+              document.body.classList.remove("handview"); $("#setup").classList.add("on"); }
+      : ()=>{ bar.classList.remove("on"); soloDeal(); };
+    acts.appendChild(b);
+    $("#whose").textContent = SOLO.over ? "That is the lot" : (watching ? "You are out" : "The show");
+    $("#whose").className="whose";
+    $("#hint").textContent="";
+    if(watching) setTimeout(()=>{ if(SOLO.on&&SOLO.G&&SOLO.G.done&&!SOLO.over){ bar.classList.remove("on"); soloDeal(); } }, 2200);
+  } else {
+    bar.classList.remove("on"); document.body.classList.remove("barred");
+    if(watching){ $("#whose").className="whose"; $("#whose").textContent="You are out \u2014 watching for the pot"; }
+  }
+  layoutSolo();
+}
+function layoutSolo(){
+  const fanTop=innerHeight+SINKPX-CW*1.4;
+  $("#mypurse").style.top=Math.max(fanTop-30,innerHeight*0.62)+"px";
+  $("#potlbl").style.top=Math.max(fanTop-34,innerHeight*0.62)+"px";
+  const t=parseInt($("#tablerow").style.top||"0",10)||innerHeight*0.4;
+  $("#solobar").style.top=Math.round(t+TW*1.4+26)+"px";
+}
+
+
+/* ===================== round the table, by AirDrop ===================== */
+// No connection anywhere. A player's hand travels to them in a link and their
+// go comes back in another. Because nothing is live, a link can open in any
+// tab at any time and the game carries on — which is the whole point.
+function packHand(seat){
+  const G=SOLO.G;
+  return encodeURIComponent(JSON.stringify({
+    r:SOLO.round, s:seat, c:SOLO.coin, p:SOLO.pot, kr:G.knockRule,
+    n:SOLO.order.map(pi=>SOLO.players[pi].name),
+    lv:SOLO.order.map(pi=>SOLO.players[pi].lives),
+    y:G.hands[seat], t:G.table, f:G.faceUp,
+    tn:G.turn, k:G.knockedBy, tg:G.toGo, g:G.goes, nn:G.n
+  }));
+}
+function unpackHand(raw){ try{ return JSON.parse(decodeURIComponent(raw)); }catch(e){ return null; } }
+function handLink(seat){
+  return location.href.split("#")[0]+"#h="+packHand(seat);
+}
+function moveLink(d, mv){
+  const v=[d.r, d.s, mv.take==null?"x":mv.take, mv.drop==null?"x":mv.drop, mv.knock?1:0].join(".");
+  return location.href.split("#")[0]+"#g="+v;
+}
+function applyMoveLink(v){
+  const a=String(v).split(".");
+  if(a.length<5) return {ok:false, why:"that go could not be read"};
+  const round=+a[0], seat=+a[1];
+  const mv={ take:a[2]==="x"?null:+a[2], drop:a[3]==="x"?null:+a[3], knock:a[4]==="1" };
+  if(!SOLO.G) return {ok:false, why:"there is no hand running on this device"};
+  if(round!==SOLO.round) return {ok:false, why:"that go was for hand "+round+", this is hand "+SOLO.round};
+  if(seat!==SOLO.G.turn) return {ok:false, why:"it is not "+(SOLO.players[SOLO.order[seat]]||{name:"their"}).name+"'s go"};
+  const r=applyMove(SOLO.G, seat, mv);
+  if(!r.ok) return r;
+  saveTable();
+  if(SOLO.G.done) soloSettle(); else pushSolo();
+  return {ok:true};
+}
+
+/* --- the dealer's side: hand this one out, wait for it back --- */
+function drawAway(){
+  const bar=$("#solobar"), res=$("#soloRes"), acts=$("#soloActs");
+  const G=SOLO.G;
+  if(!SOLO.airdrop || !G || G.done) return false;
+  const seat=G.turn, pi=SOLO.order[seat], pl=SOLO.players[pi];
+  if(!pl || !pl.away) return false;
+  bar.classList.add("on");
+  document.body.classList.add("barred");
+  res.innerHTML = SOLO.sent===SOLO.round+":"+seat
+    ? "Sent to <b>"+esc(pl.name)+"</b>. When their go comes back, open it and the table moves on."
+    : "<b>"+esc(pl.name)+"</b> is next. Send them their hand.";
+  acts.innerHTML="";
+  const b=el("button","primary");
+  b.textContent = SOLO.sent===SOLO.round+":"+seat ? "Send it again" : "Send "+pl.name+" their hand";
+  b.onclick=async()=>{
+    const url=handLink(seat);
+    SOLO.sent=SOLO.round+":"+seat;
+    try{
+      if(navigator.share) await navigator.share({title:"Brag — "+pl.name,url});
+      else prompt("Send this to "+pl.name+":",url);
+    }catch(e){}
+    drawSolo();
+  };
+  acts.appendChild(b);
+  $("#whose").className="whose";
+  $("#whose").innerHTML="<b>"+esc(pl.name)+"</b> to go";
+  $("#hint").textContent="";
+  return true;
+}
+
+/* --- a player's side: one hand, one go, one link back --- */
+const AWAY={ on:false, d:null };
+function awayBoot(d){
+  AWAY.on=true; AWAY.d=d;
+  SOLO.on=false;
+  SOLO.coin=d.c; SOLO.pot=d.p;
+  P.net="open"; P.giving=null; P.knockWith=false;
+  handBoot({seat:d.s, name:d.n[d.s]||"You"});
+  P.S={ t:"state", seat:d.s, names:d.n, knockRule:d.kr,
+        you:d.y, table:d.t, faceUp:d.f, turn:d.tn, knockedBy:d.k, toGo:d.tg,
+        done:false, round:d.r,
+        can: (d.tn===d.s) ? {swap:true, knock:(d.k===null && (d.g||0)>=d.nn)} : {swap:false,knock:false} };
+  drawHand();
+  drawAwayFurniture();
+}
+function drawAwayFurniture(){
+  const d=AWAY.d;
+  $("#potlbl").style.display=""; $("#mypurse").style.display="";
+  $("#potV").textContent=money(SOLO.pot);
+  const mc=$("#myCoins"); mc.innerHTML="";
+  const mine=d.lv[d.s];
+  for(let i=0;i<3;i++) mc.appendChild(coinEl(i>=mine));
+  const box=$("#opps"); box.innerHTML="";
+  d.n.forEach((nm,seat)=>{
+    if(seat===d.s) return;
+    const e=el("div","opp"+(d.lv[seat]<=0?" out":""));
+    if(d.tn===seat) e.classList.add("turn");
+    if(d.k===seat) e.classList.add("knocked");
+    const t=el("div","nm"); t.textContent=nm; e.appendChild(t);
+    e.appendChild(purseEl(d.lv[seat]));
+    const cs=el("div","cards");
+    for(let j=0;j<3;j++) cs.appendChild(backEl());
+    e.appendChild(cs);
+    box.appendChild(e);
+  });
+  layoutSolo();
+}
+// a go made on a player's phone is not played here, it is sent home
+function sendMyGo(mv){
+  const d=AWAY.d, url=moveLink(d, mv);
+  const bar=$("#solobar"), res=$("#soloRes"), acts=$("#soloActs");
+  bar.classList.add("on"); document.body.classList.add("barred");
+  res.innerHTML="That is your go. Send it back to the dealer.";
+  acts.innerHTML="";
+  const b=el("button","primary"); b.textContent="Send my go";
+  b.onclick=async()=>{
+    try{
+      if(navigator.share) await navigator.share({title:"Brag — my go",url});
+      else prompt("Send this back to the dealer:",url);
+    }catch(e){}
+    res.innerHTML="Sent. Wait for your next hand to arrive.";
+    acts.innerHTML="";
+  };
+  acts.appendChild(b);
+  $("#whose").className="whose"; $("#whose").textContent="Your go is ready";
+  $("#hint").textContent="";
+}
+
+/* ===================== boot ===================== */
+$("#stamp").textContent="v"+VERSION;
+$("#gateCredit").classList.add("on");
+const SETUP={stake:1, cpu:3, rule:"same", airdrop:false};
+function picks(sel, attr, key, onPick){
+  document.querySelectorAll(sel+" .pick").forEach(b=>{
+    b.onclick=()=>{
+      document.querySelectorAll(sel+" .pick").forEach(o=>o.classList.remove("sel"));
+      b.classList.add("sel");
+      SETUP[key]= attr==="data-stake" ? parseFloat(b.getAttribute(attr)) : b.getAttribute(attr);
+      if(onPick) onPick();
+    };
+  });
+}
+(function buildCounts(){
+  const box=$("#countPicks");
+  [1,2,3,4,5].forEach(n=>{
+    const b=el("button","pick"+(n===3?" sel":""));
+    b.setAttribute("data-cpu",String(n));
+    b.innerHTML=(n+1)+'<span class="sub">'+(n===1?"HEADS UP":"PLAYERS")+'</span>';
+    box.appendChild(b);
+  });
+  picks("#countPicks","data-cpu","cpu");
+  document.querySelectorAll("#countPicks .pick").forEach(b=>{
+    const prev=b.onclick;
+    b.onclick=()=>{ prev(); SETUP.cpu=parseInt(b.getAttribute("data-cpu"),10); };
+  });
+})();
+picks("#stakePicks","data-stake","stake");
+picks("#rulePicks","data-rule","rule");
+$("#beSolo").onclick=()=>{
+  SETUP.airdrop=false;
+  $("#setupTitle").textContent="On your own";
+  $("#countLbl").textContent="ROUND THE TABLE";
+  $("#startSolo").textContent="Deal them out";
+  $("#gate").classList.remove("on"); $("#setup").classList.add("on");
+  $("#gateCredit").classList.remove("on");
+};
+$("#startSolo").onclick=()=>{
+  $("#setup").classList.remove("on");
+  soloStart(SETUP.stake, SETUP.cpu, SETUP.rule, SETUP.airdrop);
+  saveTable();
+};
+$("#beTable").onclick=()=>{
+  SETUP.airdrop=true;
+  $("#setupTitle").textContent="Round the table";
+  $("#countLbl").textContent="HOW MANY OF YOU";
+  $("#startSolo").textContent="Deal and send them out";
+  $("#gate").classList.remove("on"); $("#setup").classList.add("on");
+  $("#gateCredit").classList.remove("on");
+};
+(function(){
+  const q=hashParams();
+  if(q && q.h){                       // a hand has been sent to this device
+    const d=unpackHand(q.h);
+    if(d){ $("#gate").classList.remove("on"); $("#gateCredit").classList.remove("on"); awayBoot(d); }
+    else $("#gateMsg").textContent="That hand could not be read. Ask for it again.";
+    return;
+  }
+  if(q && q.g){                       // somebody's go has come back to the dealer
+    if(!loadTable()){
+      $("#gateMsg").textContent="There is no table running on this device. Open the tab with the game in it and try again.";
+      return;
+    }
+    $("#gate").classList.remove("on"); $("#gateCredit").classList.remove("on");
+    P.net="open"; handBoot({seat:0,name:"You"});
+    const r=applyMoveLink(q.g);
+    if(!r.ok){
+      pushSolo();
+      const bar=$("#solobar"); bar.classList.add("on");
+      $("#soloRes").textContent=r.why||"that go could not be used";
+      $("#soloActs").innerHTML="";
+      const b=el("button","primary"); b.textContent="Carry on";
+      b.onclick=()=>{ bar.classList.remove("on"); pushSolo(); };
+      $("#soloActs").appendChild(b);
+    }
+    return;
+  }
+})();
+document.addEventListener("gesturestart",e=>e.preventDefault());
+</script>
+<script data-goatcounter="https://s77ffy.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
