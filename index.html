@@ -4,14 +4,14 @@
   Copyright (c) 2026 Ben Stiff @ Room46.uk. All rights reserved.
   No copying, redistribution or rehosting without permission.
   Card graphics carried over from the Noms project.
-  HO·Ben Stiff @ Room46.uk·0.4.1·2026-11-27·bg7d2f
+  HO·Ben Stiff @ Room46.uk·0.5.0·2026-11-28·bg7d2f
 -->
-<html lang="en" data-build="HO·Ben Stiff @ Room46.uk·0.4.1·2026-11-27·bg7d2f">
+<html lang="en" data-build="HO·Ben Stiff @ Room46.uk·0.5.0·2026-11-28·bg7d2f">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="app-repo" content="Brag">
-<meta name="app-version" content="0.4.1">
+<meta name="app-version" content="0.5.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#05070f">
@@ -248,6 +248,28 @@ button[disabled]{opacity:.32}
 .potlbl .v{font:400 17px/1 Georgia,serif;color:var(--gold-hi)}
 .potlbl .lbl{font:400 9px/1 ui-monospace,Menlo,monospace;color:var(--bone-dim);letter-spacing:.1em}
 
+.recap{
+  position:absolute;left:0;right:0;top:0;bottom:0;z-index:90;display:none;
+  flex-direction:column;align-items:center;justify-content:center;gap:13px;
+  padding:26px 20px;text-align:center;background:rgba(3,6,14,.95);
+}
+.recap.on{display:flex}
+.rtitle{font:400 20px/1.2 Georgia,serif;color:var(--turn)}
+.rlist{display:flex;flex-direction:column;gap:11px;max-width:34ch;width:100%}
+.rrow{display:flex;align-items:center;gap:9px;justify-content:flex-start;
+  font:400 14.5px/1.35 Georgia,serif;color:var(--bone);text-align:left}
+.rrow .who{color:var(--gold-hi);white-space:nowrap}
+.rrow.mine .who{color:var(--turn)}
+.chip{flex:none;min-width:34px;height:40px;border-radius:5px;background:#fbf7ec;color:#221b26;
+  border:1px solid #cfc2a4;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;line-height:1;padding:0 4px;box-shadow:0 1px 3px rgba(0,0,0,.45)}
+.chip b{font:700 16px/1 Georgia,serif}
+.chip i{font-style:normal;font-size:13px;margin-top:1px}
+.chip.red{color:#c0392b}
+.rrow .hid{min-width:34px;height:40px;border-radius:5px;flex:none;
+  border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;
+  font:400 17px/1 Georgia,serif;color:var(--bone-dim)}
+.rnote{font:400 12px/1.4 Georgia,serif;color:var(--bone-dim);max-width:30ch}
 .solobar{
   position:absolute;left:0;right:0;z-index:70;display:none;
   flex-direction:column;align-items:center;gap:11px;padding:16px 18px;text-align:center;
@@ -306,26 +328,32 @@ body.handview .stamp{display:none}
 
 <section id="hand" class="screen">
   <div class="topbar">
-    <div class="hcredit" id="hCredit">&copy; 2026 Ben Stiff @ Room46.uk &middot; v0.4.1</div>
+    <div class="hcredit" id="hCredit">&copy; 2026 Ben Stiff @ Room46.uk &middot; v0.5.0</div>
     <div class="opps" id="opps"></div>
     <div class="whose" id="whose">waiting for the deal</div>
     <div class="tablerow" id="tablerow"></div>
   </div>
   <div class="potlbl" id="potlbl" style="display:none"><div class="v" id="potV"></div><div class="lbl">IN THE POT</div></div>
   <div class="mypurse" id="mypurse" style="display:none"><div class="lbl">YOURS</div><div class="purse" id="myCoins"></div></div>
+  <div class="recap" id="recap">
+    <div class="rtitle" id="rtitle">While you were away</div>
+    <div class="rlist" id="rlist"></div>
+    <button class="primary" id="rok">Got it</button>
+    <div class="rnote">You only get this once. After that it is down to you.</div>
+  </div>
   <div class="solobar" id="solobar"><div class="res" id="soloRes"></div><div id="soloActs"></div></div>
   <div class="hint" id="hint"></div>
   <div class="pile" id="pile"></div>
   <div class="actions" id="actions"></div>
 </section>
 
-<div class="stamp" id="stamp">v0.4.1</div>
+<div class="stamp" id="stamp">v0.5.0</div>
 <div class="gatecredit" id="gateCredit">&copy; 2026 Ben Stiff @ Room46.uk</div>
 
 <script>
 "use strict";
-const VERSION="0.4.1";
-const BUILD="HO·Ben Stiff @ Room46.uk·0.4.1·2026-11-27·bg7d2f";
+const VERSION="0.5.0";
+const BUILD="HO·Ben Stiff @ Room46.uk·0.5.0·2026-11-28·bg7d2f";
 const LOCK_HOST="";   // e.g. "s77ffy.github.io" — empty means no lock
 const HOME_URL ="";   // e.g. "https://s77ffy.github.io/Brag/"
 (function lock(){
@@ -386,7 +414,7 @@ function newHand(seed,round,n,knockRule){
   for(let s=0;s<n;s++) hands.push([d[k++],d[k++],d[k++]]);
   return { n, hands, table:[d[k++],d[k++],d[k++]], faceUp:[true,false,true], turn:0,
            goes:0, knockedBy:null, toGo:null, knockRule:knockRule||"same",
-           done:false, winners:null };
+           log:[], done:false, winners:null };
 }
 function legal(G,seat){
   if(!G||G.done||seat!==G.turn) return {swap:false,knock:false};
@@ -410,8 +438,14 @@ function applyMove(G,seat,mv){
     if(mv.take<0||mv.take>2||mv.drop<0||mv.drop>2) return {ok:false,why:"no such card"};
     const hand=G.hands[seat].slice();
     const dropped=hand[mv.drop];
-    hand[mv.drop]=G.table[mv.take];
+    const taken=G.table[mv.take];
+    hand[mv.drop]=taken;
     G.hands[seat]=hand; G.table[mv.take]=dropped;
+    // what the table saw: the slot always, the cards only if that slot is open
+    (G.log=G.log||[]).push({s:seat, k:mv.take, o:!!G.faceUp[mv.take],
+                            t:taken, g:dropped, kn:!!wantsKnock});
+  } else if(wantsKnock){
+    (G.log=G.log||[]).push({s:seat, k:null, o:true, t:null, g:null, kn:true});
   }
   G.goes=(G.goes||0)+1;
   if(wantsKnock&&G.knockedBy===null){ G.knockedBy=seat; G.toGo=G.n-1; }
@@ -419,6 +453,19 @@ function applyMove(G,seat,mv){
   if(G.knockedBy!==null&&G.toGo<=0){ G.done=true; G.turn=null; }
   else G.turn=(seat+1)%G.n;
   return {ok:true};
+}
+// Everything that happened since this seat last had a go — which is exactly
+// what they would have watched at a real table. A card is named only where it
+// changed hands in the open, or where it was their own move.
+function recapFor(G, seat){
+  const log=G.log||[];
+  let from=0;
+  for(let i=log.length-1;i>=0;i--) if(log[i].s===seat){ from=i+1; break; }
+  return log.slice(from).map(e=>{
+    const open = e.o || e.s===seat;
+    return { s:e.s, k:e.k, o:!!e.o, kn:!!e.kn, mine:e.s===seat,
+             t: open ? e.t : null, g: open ? e.g : null };
+  });
 }
 function rankHand(cards){
   const r=cards.map(c=>c%13).sort((a,b)=>b-a), su=cards.map(c=>(c/13)|0);
@@ -682,6 +729,43 @@ function bindSlot(s,card){
 }
 
 
+/* ===================== what the table saw ===================== */
+const SLOTNAME=["left","middle","right"];
+function chipEl(c){
+  const e=el("span","chip"+(cardRed(c)?" red":""));
+  e.innerHTML="<b>"+cardRank(c)+"</b><i>"+cardSuit(c)+"</i>";
+  return e;
+}
+function recapRow(e, names){
+  const row=el("div","rrow"+(e.mine?" mine":""));
+  const who=el("span","who"); who.textContent=(e.mine?"You":names[e.s]||("Seat "+e.s));
+  row.appendChild(who);
+  if(e.k===null){
+    const t=el("span"); t.textContent="knocked."; row.appendChild(t); return row;
+  }
+  const took=el("span"); took.textContent="took the "+SLOTNAME[e.k]; row.appendChild(took);
+  if(e.t!=null) row.appendChild(chipEl(e.t));
+  else { const h=el("span","hid"); h.textContent="?"; row.appendChild(h); }
+  const gave=el("span"); gave.textContent="and left"; row.appendChild(gave);
+  if(e.g!=null) row.appendChild(chipEl(e.g));
+  else { const h=el("span","hid"); h.textContent="?"; row.appendChild(h); }
+  if(e.kn){ const k=el("span"); k.style.color="var(--turn)"; k.textContent="\u2014 and knocked"; row.appendChild(k); }
+  return row;
+}
+// Shown once, at the start of your go. No way back to it afterwards: who put
+// what where is the game.
+let RECAPDONE="";
+function showRecap(entries, names, key, after){
+  if(!entries || !entries.length || RECAPDONE===key){ if(after) after(); return false; }
+  RECAPDONE=key;
+  const list=$("#rlist"); list.innerHTML="";
+  entries.forEach(e=>list.appendChild(recapRow(e,names)));
+  $("#rtitle").textContent = entries.length===1 ? "One go while you were away" : "While you were away";
+  $("#recap").classList.add("on");
+  $("#rok").onclick=()=>{ $("#recap").classList.remove("on"); if(after) after(); };
+  return true;
+}
+
 /* ===================== on your own ===================== */
 // Coins are lives. Three in front of everyone; worst hand at the show pays one
 // into the pot. A prial costs everyone else a coin instead. Last one with a
@@ -782,6 +866,11 @@ function viewForSolo(seat){
 function pushSolo(){
   P.S = SOLO.G ? viewForSolo(mySeat()) : null;
   drawHand();
+  const G=SOLO.G, me=mySeat();
+  if(G && !G.done && me>=0 && G.turn===me){
+    showRecap(recapFor(G,me), SOLO.order.map(pi=>SOLO.players[pi].name),
+              "r"+SOLO.round+"-l"+(G.log||[]).length);
+  }
   soloThink();
 }
 function soloMove(seat, mv){
@@ -945,6 +1034,7 @@ function drawSolo(){
   });
 
   const bar=$("#solobar"), res=$("#soloRes"), acts=$("#soloActs");
+  if(G && G.done) $("#recap").classList.remove("on");
   if(drawAway()) return;
   const watching = SOLO.players[0].lives<=0 && !SOLO.over;
   document.body.classList.toggle("barred", !!(G&&G.done&&SOLO.msg));
@@ -988,10 +1078,14 @@ function packHand(seat){
   const G=SOLO.G;
   return encodeURIComponent(JSON.stringify({
     r:SOLO.round, s:seat, c:SOLO.coin, p:SOLO.pot, kr:G.knockRule,
-    n:SOLO.order.map(pi=>SOLO.players[pi].name),
+    // "You" means the person holding the phone, so the dealer needs a name
+    // of their own once the hand leaves this device
+    n:SOLO.order.map((pi,i)=> i===seat ? "You"
+        : (SOLO.players[pi].name==="You" ? "The dealer" : SOLO.players[pi].name)),
     lv:SOLO.order.map(pi=>SOLO.players[pi].lives),
     y:G.hands[seat], t:G.table, f:G.faceUp,
-    tn:G.turn, k:G.knockedBy, tg:G.toGo, g:G.goes, nn:G.n
+    tn:G.turn, k:G.knockedBy, tg:G.toGo, g:G.goes, nn:G.n,
+    rc:recapFor(G, seat)
   }));
 }
 function unpackHand(raw){ try{ return JSON.parse(decodeURIComponent(raw)); }catch(e){ return null; } }
@@ -1064,6 +1158,7 @@ function awayBoot(d){
         can: (d.tn===d.s) ? {swap:true, knock:(d.k===null && (d.g||0)>=d.nn)} : {swap:false,knock:false} };
   drawHand();
   drawAwayFurniture();
+  if(d.tn===d.s) showRecap(d.rc, d.n, "away-"+d.r+"-"+((d.rc&&d.rc.length)||0));
 }
 function drawAwayFurniture(){
   const d=AWAY.d;
