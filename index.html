@@ -4,14 +4,14 @@
   Copyright (c) 2026 Ben Stiff @ Room46.uk. All rights reserved.
   No copying, redistribution or rehosting without permission.
   Card graphics carried over from the Noms project.
-  HO·Ben Stiff @ Room46.uk·0.4.0·2026-11-27·bg7d2f
+  HO·Ben Stiff @ Room46.uk·0.4.1·2026-11-27·bg7d2f
 -->
-<html lang="en" data-build="HO·Ben Stiff @ Room46.uk·0.4.0·2026-11-27·bg7d2f">
+<html lang="en" data-build="HO·Ben Stiff @ Room46.uk·0.4.1·2026-11-27·bg7d2f">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="app-repo" content="Brag">
-<meta name="app-version" content="0.4.0">
+<meta name="app-version" content="0.4.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#05070f">
@@ -306,7 +306,7 @@ body.handview .stamp{display:none}
 
 <section id="hand" class="screen">
   <div class="topbar">
-    <div class="hcredit" id="hCredit">&copy; 2026 Ben Stiff @ Room46.uk &middot; v0.4.0</div>
+    <div class="hcredit" id="hCredit">&copy; 2026 Ben Stiff @ Room46.uk &middot; v0.4.1</div>
     <div class="opps" id="opps"></div>
     <div class="whose" id="whose">waiting for the deal</div>
     <div class="tablerow" id="tablerow"></div>
@@ -319,13 +319,13 @@ body.handview .stamp{display:none}
   <div class="actions" id="actions"></div>
 </section>
 
-<div class="stamp" id="stamp">v0.4.0</div>
+<div class="stamp" id="stamp">v0.4.1</div>
 <div class="gatecredit" id="gateCredit">&copy; 2026 Ben Stiff @ Room46.uk</div>
 
 <script>
 "use strict";
-const VERSION="0.4.0";
-const BUILD="HO·Ben Stiff @ Room46.uk·0.4.0·2026-11-27·bg7d2f";
+const VERSION="0.4.1";
+const BUILD="HO·Ben Stiff @ Room46.uk·0.4.1·2026-11-27·bg7d2f";
 const LOCK_HOST="";   // e.g. "s77ffy.github.io" — empty means no lock
 const HOME_URL ="";   // e.g. "https://s77ffy.github.io/Brag/"
 (function lock(){
@@ -586,6 +586,7 @@ function drawHand(){
   }
   drawSlots();
   drawSolo();
+  if(AWAY.on) drawAwayFurniture();
 }
 function positionHint(){
   const fanTop = innerHeight + SINKPX - CW*1.4;      // where the held cards begin
@@ -709,15 +710,37 @@ function soloStart(coin, nCpu, rule, airdrop){
   }
   P.net="open"; P.giving=null; P.knockWith=false;
   handBoot({seat:0,name:"You"});
+  if(SOLO.airdrop) watchTable();
   soloDeal();
 }
 function saveTable(){
   if(!SOLO.airdrop) return;
+  SOLO.stamp=Date.now()+"."+Math.random().toString(36).slice(2,7);
   try{ localStorage.setItem("brag.table", JSON.stringify({
+    stamp:SOLO.stamp,
     coin:SOLO.coin, pot:SOLO.pot, players:SOLO.players, order:SOLO.order,
     G:SOLO.G, round:SOLO.round, seed:SOLO.seed, knockRule:SOLO.knockRule,
     over:SOLO.over
   })); }catch(e){}
+}
+// An AirDropped go often lands in a tab you never look at. Whichever tab you
+// are actually looking at should still be right, so they all follow the same
+// written-down table.
+function watchTable(){
+  if(watchTable.on) return; watchTable.on=true;
+  const pick=()=>{
+    if(!SOLO.airdrop) return;
+    let d=null;
+    try{ d=JSON.parse(localStorage.getItem("brag.table")||"null"); }catch(e){}
+    if(!d || !d.stamp || d.stamp===SOLO.stamp) return;
+    Object.assign(SOLO,{ranked:null,msg:"",busy:false},d);
+    SOLO.sent=null;
+    P.giving=null; P.knockWith=false;
+    if(SOLO.G && SOLO.G.done && !SOLO.msg) soloSettle(); else pushSolo();
+  };
+  addEventListener("storage",e=>{ if(e.key==="brag.table") pick(); });
+  setInterval(pick, 700);
+  addEventListener("visibilitychange",()=>{ if(!document.hidden) pick(); });
 }
 function loadTable(){
   try{
@@ -945,11 +968,15 @@ function drawSolo(){
   layoutSolo();
 }
 function layoutSolo(){
+  if(!document.body.classList.contains("handview")) return;
   const fanTop=innerHeight+SINKPX-CW*1.4;
   $("#mypurse").style.top=Math.max(fanTop-30,innerHeight*0.62)+"px";
   $("#potlbl").style.top=Math.max(fanTop-34,innerHeight*0.62)+"px";
-  const t=parseInt($("#tablerow").style.top||"0",10)||innerHeight*0.4;
-  $("#solobar").style.top=Math.round(t+TW*1.4+26)+"px";
+  const t=parseInt($("#tablerow").style.top||"0",10)||Math.round(innerHeight*0.34);
+  // never above the table, never off the bottom
+  const want=t+TW*1.4+26;
+  $("#solobar").style.top=Math.round(Math.max(t+TW*1.4+10,
+                                     Math.min(want, innerHeight-170)))+"px";
 }
 
 
@@ -1000,11 +1027,12 @@ function drawAway(){
   bar.classList.add("on");
   document.body.classList.add("barred");
   res.innerHTML = SOLO.sent===SOLO.round+":"+seat
-    ? "Sent to <b>"+esc(pl.name)+"</b>. When their go comes back, open it and the table moves on."
+    ? "Sent to <b>"+esc(pl.name)+"</b>. Their go lands here by itself \u2014 if it opens a second tab, that is fine, this one keeps up."
     : "<b>"+esc(pl.name)+"</b> is next. Send them their hand.";
   acts.innerHTML="";
   const b=el("button","primary");
   b.textContent = SOLO.sent===SOLO.round+":"+seat ? "Send it again" : "Send "+pl.name+" their hand";
+  layoutSolo();
   b.onclick=async()=>{
     const url=handLink(seat);
     SOLO.sent=SOLO.round+":"+seat;
@@ -1018,6 +1046,7 @@ function drawAway(){
   $("#whose").className="whose";
   $("#whose").innerHTML="<b>"+esc(pl.name)+"</b> to go";
   $("#hint").textContent="";
+  layoutSolo();
   return true;
 }
 
@@ -1077,6 +1106,7 @@ function sendMyGo(mv){
   acts.appendChild(b);
   $("#whose").className="whose"; $("#whose").textContent="Your go is ready";
   $("#hint").textContent="";
+  layoutSolo();
 }
 
 /* ===================== boot ===================== */
@@ -1145,6 +1175,7 @@ $("#beTable").onclick=()=>{
     }
     $("#gate").classList.remove("on"); $("#gateCredit").classList.remove("on");
     P.net="open"; handBoot({seat:0,name:"You"});
+    watchTable();
     const r=applyMoveLink(q.g);
     if(!r.ok){
       pushSolo();
